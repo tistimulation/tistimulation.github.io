@@ -4,3 +4,5 @@
 
 layout: home
 ---
+
+![Image](/pics/ti-art-blue.png)
