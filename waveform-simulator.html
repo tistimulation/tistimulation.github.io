@@ -1,0 +1,1727 @@
+---
+layout: none
+permalink: /simulator/
+---
+
+<!--This document was made by Claude AI over lots of back and forth prompting from me. It is based
+on a Python script which was made by Copilot AI, also with lots of back and forth prompting.-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TI Stimulation Simulator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+        :root {
+            --bg: #0d0f14;
+            --surface: #141720;
+            --panel: #1a1e2a;
+            --border: #2a2f3f;
+            --border2: #3a4055;
+            --text: #c8cfe0;
+            --dim: #606880;
+            --head: #e8eaf0;
+            --accent: #4fc3f7;
+            --accent2: #7c83ff;
+            --r: #ff6b6b;
+            --b: #4fc3f7;
+            --g: #69db7c;
+            --p: #cc5de8;
+            --ctrl-w: 300px;
+            --tab-h: 44px;
+            --rad: 6px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow: hidden
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh
+        }
+
+        #topbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0 18px;
+            height: 46px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0
+        }
+
+        .logo {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: .06em
+        }
+
+        .sub {
+            font-size: 11px;
+            color: var(--dim);
+            font-family: 'IBM Plex Mono', monospace
+        }
+
+        .spacer {
+            flex: 1
+        }
+
+        .badge {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: var(--dim);
+            border: 1px solid var(--border2);
+            border-radius: 3px;
+            padding: 2px 7px
+        }
+
+        #tabbar {
+            display: flex;
+            align-items: stretch;
+            height: var(--tab-h);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            padding: 0 10px;
+            gap: 2px
+        }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--dim);
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            transition: color .15s, border-color .15s
+        }
+
+        .tab-btn:hover {
+            color: var(--text)
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent)
+        }
+
+        .tab-panel {
+            display: none;
+            flex: 1;
+            overflow: hidden
+        }
+
+        .tab-panel.active {
+            display: flex;
+            flex-direction: column
+        }
+
+        #ti-panel {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 12px;
+            gap: 12px
+        }
+
+        #ti-controls {
+            width: var(--ctrl-w);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto
+        }
+
+        #ti-controls::-webkit-scrollbar {
+            width: 3px
+        }
+
+        #ti-controls::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 2px
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--rad);
+            padding: 10px 12px
+        }
+
+        .card-title {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--dim);
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            margin-bottom: 9px;
+            padding-bottom: 7px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .mode-row {
+            display: flex;
+            gap: 5px
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 5px 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--dim);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all .12s;
+            letter-spacing: .02em
+        }
+
+        .mode-btn:hover {
+            color: var(--text);
+            border-color: var(--border2)
+        }
+
+        .mode-btn.active {
+            color: var(--bg);
+            background: var(--accent);
+            border-color: var(--accent)
+        }
+
+        .frow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px
+        }
+
+        .frow:last-child {
+            margin-bottom: 0
+        }
+
+        .flabel {
+            flex: 1;
+            color: var(--dim);
+            font-size: 11px;
+            white-space: nowrap
+        }
+
+        .finput {
+            width: 70px;
+            padding: 3px 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            color: var(--head);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            text-align: right;
+            outline: none;
+            transition: border-color .12s
+        }
+
+        .finput:focus {
+            border-color: var(--accent2)
+        }
+
+        .srow {
+            margin-bottom: 8px
+        }
+
+        .srow:last-child {
+            margin-bottom: 0
+        }
+
+        .shdr {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px
+        }
+
+        .sname {
+            color: var(--dim);
+            font-size: 11px
+        }
+
+        .sval {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: var(--accent)
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 3px;
+            background: var(--border2);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg);
+            box-shadow: 0 0 5px rgba(79, 195, 247, .5);
+            transition: transform .1s
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.25)
+        }
+
+        .fft-status {
+            display: inline-block;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-top: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--dim);
+            transition: all .2s
+        }
+
+        .fft-status.ready {
+            color: var(--g);
+            border-color: var(--g)
+        }
+
+        .fft-status.waiting {
+            color: #f5a623;
+            border-color: #f5a623
+        }
+
+        #pp-btn {
+            width: 100%;
+            padding: 7px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--bg);
+            background: var(--accent);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            transition: opacity .12s
+        }
+
+        #pp-btn:hover {
+            opacity: .85
+        }
+
+        #pp-btn.paused {
+            background: var(--border2);
+            color: var(--text)
+        }
+
+        #ti-plots {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 8px;
+            overflow: hidden;
+            min-width: 0
+        }
+
+        .plot-wrap {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--rad);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+            min-width: 0
+        }
+
+        .plot-hdr {
+            padding: 5px 10px;
+            flex-shrink: 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--dim);
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0
+        }
+
+        .plot-hdr .sep {
+            color: var(--border2)
+        }
+
+        .canvas-cell {
+            flex: 1;
+            position: relative;
+            min-height: 0;
+            min-width: 0
+        }
+
+        .canvas-cell canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%
+        }
+
+        .leg {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .leg-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: var(--dim)
+        }
+
+        .leg-line {
+            width: 18px;
+            height: 2px;
+            border-radius: 1px
+        }
+
+        .leg-dash {
+            width: 18px;
+            height: 0;
+            border-top: 2px dashed;
+            border-radius: 1px
+        }
+
+        #circuit-panel {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 12px;
+            gap: 12px
+        }
+
+        #circuit-controls {
+            width: var(--ctrl-w);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto
+        }
+
+        #circuit-controls::-webkit-scrollbar {
+            width: 3px
+        }
+
+        #circuit-controls::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 2px
+        }
+
+        #circuit-viz {
+            flex: 1;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--rad);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0
+        }
+
+        #cirt-title {
+            padding: 5px 12px;
+            flex-shrink: 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--dim);
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border)
+        }
+
+        #cirt-wrap {
+            flex: 1;
+            position: relative;
+            min-height: 0;
+            overflow: hidden
+        }
+
+        #cirt-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%
+        }
+
+        .res-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px
+        }
+
+        .res-cell {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 8px
+        }
+
+        .res-lbl {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            color: var(--dim);
+            margin-bottom: 2px
+        }
+
+        .res-v {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            color: var(--head);
+            font-weight: 600
+        }
+
+        .res-v span {
+            font-size: 9px;
+            color: var(--dim);
+            font-weight: 400
+        }
+
+        .res-i {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: var(--dim);
+            margin-top: 1px
+        }
+
+        #upd-btn {
+            width: 100%;
+            padding: 7px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--bg);
+            background: var(--accent);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            letter-spacing: .06em;
+            text-transform: uppercase
+        }
+
+        #upd-btn:hover {
+            opacity: .85
+        }
+
+        @media(max-width:860px) {
+
+            #ti-panel,
+            #circuit-panel {
+                flex-direction: column
+            }
+
+            #ti-controls,
+            #circuit-controls {
+                width: 100%;
+                max-height: 35vh
+            }
+
+            #ti-plots {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(4, 1fr)
+            }
+        }
+
+        /* ── Dual-handle range slider ── */
+        .dual-range {
+            position: relative;
+            height: 28px;
+            margin-top: 4px;
+        }
+
+        .dual-range .track {
+            position: absolute;
+            top: 12px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--border2);
+            border-radius: 2px;
+        }
+
+        .dual-range .track-fill {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .dual-range input[type=range] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 28px;
+            background: transparent;
+            pointer-events: none;
+            -webkit-appearance: none;
+            appearance: none;
+            z-index: 2;
+        }
+
+        .dual-range input[type=range]::-webkit-slider-thumb {
+            pointer-events: all;
+            -webkit-appearance: none;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg);
+            box-shadow: 0 0 5px rgba(79, 195, 247, .5);
+            cursor: pointer;
+            transition: transform .1s;
+        }
+
+        .dual-range input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        .dual-range input[type=range]::-moz-range-thumb {
+            pointer-events: all;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg);
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+
+        <div id="topbar">
+            <div class="logo">TI STIMULATION LAB</div>
+            <div class="sub">// interactive simulator</div>
+            <div class="spacer"></div>
+            <div class="badge">BROWSER-ONLY · NO DATA SENT</div>
+        </div>
+
+        <div id="tabbar">
+            <button class="tab-btn active" data-tab="ti">Waveform Simulator</button>
+            <button class="tab-btn" data-tab="circuit">Electrode Circuit</button>
+        </div>
+
+        <!-- TAB 1 -->
+        <div class="tab-panel active" id="tab-ti">
+            <div id="ti-panel">
+                <div id="ti-controls">
+
+                    <div class="card">
+                        <div class="card-title">Stimulation Mode</div>
+                        <div class="mode-row">
+                            <button class="mode-btn active" id="btn-normal">Normal</button>
+                            <button class="mode-btn" id="btn-pwm">PWM</button>
+                            <button class="mode-btn" id="btn-fsk">FSK</button>
+                        </div>
+                    </div>
+
+                    <div class="card" id="fsk-card" style="display:none">
+                        <div class="card-title">FSK Parameters</div>
+                        <div class="frow"><span class="flabel">PRF (Hz)</span><input class="finput" id="prf" value="10">
+                        </div>
+                        <div class="frow"><span class="flabel">Pulse Width (ms)</span><input class="finput" id="pw"
+                                value="10"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Signal Parameters</div>
+                        <div class="frow"><span class="flabel">Frequency 1 (Hz)</span><input class="finput" id="f1"
+                                value="2000"></div>
+                        <div class="frow"><span class="flabel">Frequency 2 (Hz)</span><input class="finput" id="f2"
+                                value="2010"></div>
+                        <div class="frow"><span class="flabel">Phase 1 (°)</span><input class="finput" id="ph1"
+                                value="0"></div>
+                        <div class="frow"><span class="flabel">Phase 2 (°)</span><input class="finput" id="ph2"
+                                value="90"></div>
+                        <div class="frow"><span class="flabel">Amplitude 1 (mA)</span><input class="finput" id="a1"
+                                value="1.0"></div>
+                        <div class="frow"><span class="flabel">Amplitude 2 (mA)</span><input class="finput" id="a2"
+                                value="1.0"></div>
+                        <div class="frow"><span class="flabel">Nonlinearity (%)</span><input class="finput" id="nl"
+                                value="0.0"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">FFT Status</div>
+                        <div style="font-size:11px;color:var(--dim);line-height:1.6">
+                            Recomputed once 1 s of clean data is collected after any parameter change.
+                        </div>
+                        <div id="fft-status" class="fft-status">Collecting data…</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Playback</div>
+                        <div class="srow">
+                            <div class="shdr"><span class="sname">Time Speed</span><span class="sval"
+                                    id="sv-speed">21%</span></div>
+                            <input type="range" id="sl-speed" min="3" max="39" step="3" value="21">
+                        </div>
+                        <div class="srow">
+                            <div class="shdr">
+                                <span class="sname">Waves Time Range <span id="hint-L"
+                                        style="color:var(--accent);font-size:9px"></span></span>
+                                <span class="sval" id="sv-winL">10.0 ms</span>
+                            </div>
+                            <input type="range" id="sl-winL" min="1" max="10" step="0.1" value="10">
+                        </div>
+                        <div class="srow">
+                            <div class="shdr">
+                                <span class="sname">Sum Time Range <span id="hint-R"
+                                        style="color:var(--accent);font-size:9px"></span></span>
+                                <span class="sval" id="sv-winR">200 ms</span>
+                            </div>
+                            <input type="range" id="sl-winR" min="1" max="200" step="1" value="200">
+                        </div>
+                        <button id="pp-btn">⏸ Pause</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Waves Frequency Range</div>
+                        <div class="srow">
+                            <div class="shdr">
+                                <span class="sname">Range</span>
+                                <span class="sval" id="sv-fwL">1 – 8000 Hz</span>
+                            </div>
+                            <div class="dual-range" id="dr-fw">
+                                <div class="track">
+                                    <div class="track-fill" id="dr-fw-fill"></div>
+                                </div>
+                                <input type="range" id="dr-fw-lo" min="1" max="8000" value="1" step="1">
+                                <input type="range" id="dr-fw-hi" min="1" max="8000" value="8000" step="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Sum Frequency Range</div>
+                        <div class="srow">
+                            <div class="shdr">
+                                <span class="sname">Range</span>
+                                <span class="sval" id="sv-fsL">1 – 8000 Hz</span>
+                            </div>
+                            <div class="dual-range" id="dr-fs">
+                                <div class="track">
+                                    <div class="track-fill" id="dr-fs-fill"></div>
+                                </div>
+                                <input type="range" id="dr-fs-lo" min="1" max="8000" value="1" step="1">
+                                <input type="range" id="dr-fs-hi" min="1" max="8000" value="8000" step="1">
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="card">
+                        <div class="card-title">Legend</div>
+                        <div class="leg">
+                            <div class="leg-item">
+                                <div class="leg-line" style="background:var(--r)"></div>Wave 1
+                            </div>
+                            <div class="leg-item">
+                                <div class="leg-line" style="background:var(--b)"></div>Wave 2
+                            </div>
+                            <div class="leg-item">
+                                <div class="leg-line" style="background:var(--g)"></div>Sum
+                            </div>
+                            <div class="leg-item">
+                                <div class="leg-dash" style="border-color:var(--p)"></div>Envelope
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /controls -->
+
+                <div id="ti-plots">
+                    <div class="plot-wrap">
+                        <div class="plot-hdr">
+                            <span class="dot" style="background:var(--r)"></span>Wave 1
+                            <span class="sep">&amp;</span>
+                            <span class="dot" style="background:var(--b)"></span>Wave 2 · Time Domain
+                        </div>
+                        <div class="canvas-cell"><canvas id="cv-tw"></canvas></div>
+                    </div>
+                    <div class="plot-wrap">
+                        <div class="plot-hdr">
+                            <span class="dot" style="background:var(--g)"></span>Sum
+                            <span class="sep">+</span>
+                            <span class="dot" style="background:var(--p)"></span>Envelope · Time Domain
+                        </div>
+                        <div class="canvas-cell"><canvas id="cv-ts"></canvas></div>
+                    </div>
+                    <div class="plot-wrap">
+                        <div class="plot-hdr">
+                            <span class="dot" style="background:var(--r)"></span>Wave 1
+                            <span class="sep">&amp;</span>
+                            <span class="dot" style="background:var(--b)"></span>Wave 2 · FFT
+                        </div>
+                        <div class="canvas-cell"><canvas id="cv-fw"></canvas></div>
+                    </div>
+                    <div class="plot-wrap">
+                        <div class="plot-hdr">
+                            <span class="dot" style="background:var(--g)"></span>Mixed Sum · FFT
+                        </div>
+                        <div class="canvas-cell"><canvas id="cv-fs"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2 -->
+        <div class="tab-panel" id="tab-circuit">
+            <div id="circuit-panel">
+                <div id="circuit-controls">
+                    <div class="card">
+                        <div class="card-title">Stimulation</div>
+                        <div class="frow"><span class="flabel">Total Current (mA)</span><input class="finput"
+                                id="ec-itotal" value="2.0"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Electrode Separation</div>
+                        <div class="srow">
+                            <div class="shdr"><span class="sname">Distance</span><span class="sval" id="ec-dist-val">50
+                                    mm</span></div>
+                            <input type="range" id="ec-dist" min="5" max="200" value="50" step="1">
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Layer Parameters</div>
+                        <div
+                            style="font-size:10px;color:var(--dim);margin-bottom:8px;font-family:'IBM Plex Mono',monospace">
+                            R_path = R_base + ρ × distance</div>
+                        <div style="font-size:10px;color:var(--dim);margin-bottom:6px">Base resistance (Ω)</div>
+                        <div class="frow"><span class="flabel" style="color:#f5a623">Skin R_base</span><input
+                                class="finput" id="ec-skin-base" value="100"></div>
+                        <div class="frow"><span class="flabel" style="color:#69db7c">Skull R_base</span><input
+                                class="finput" id="ec-skull-base" value="500"></div>
+                        <div class="frow"><span class="flabel" style="color:#4fc3f7">Brain R_base</span><input
+                                class="finput" id="ec-brain-base" value="2000"></div>
+                        <div style="font-size:10px;color:var(--dim);margin:8px 0 6px">Resistivity (Ω/mm)</div>
+                        <div class="frow"><span class="flabel" style="color:#f5a623">Skin ρ</span><input class="finput"
+                                id="ec-skin-rho" value="20"></div>
+                        <div class="frow"><span class="flabel" style="color:#69db7c">Skull ρ</span><input class="finput"
+                                id="ec-skull-rho" value="14"></div>
+                        <div class="frow"><span class="flabel" style="color:#4fc3f7">Brain ρ</span><input class="finput"
+                                id="ec-brain-rho" value="2"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Current Distribution</div>
+                        <div class="res-grid" id="ec-results"></div>
+                    </div>
+                </div>
+                <div id="circuit-viz">
+                    <div id="cirt-title">Tissue Layer Model · Current Path Visualisation</div>
+                    <div id="cirt-wrap"><canvas id="cirt-canvas"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /app -->
+    <script>
+        'use strict';
+        const $ = id => document.getElementById(id);
+        const fv = (id, fb = 0) => { const v = parseFloat($(id).value); return isNaN(v) ? fb : v; };
+        const PI2 = Math.PI * 2;
+
+        /* ── Tabs ── */
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+                b.classList.add('active'); $('tab-' + b.dataset.tab).classList.add('active');
+                if (b.dataset.tab === 'circuit') { drawCircuit(); }
+            });
+        });
+
+        /* ════════════════════════════════════════════════════════
+           SAMPLE RATE
+           FS = 16384 = 2^14.
+           This is crucial: the radix-2 FFT requires a power-of-2
+           length. With FS=16384 and FFTLEN=FS=16384, the bin
+           spacing is exactly FS/FFTLEN = 1 Hz, so any integer-Hz
+           frequency falls precisely on one bin with no leakage.
+           Nyquist = 8192 Hz — covers the full 0–8 kHz range.
+        ════════════════════════════════════════════════════════ */
+        const FS = 16384;   // Hz  — 2^14, power of 2
+        const BUFLEN = 1 << 17;   // 131072 — rolling display buffer (8 seconds at FS=16384)
+        const FFTLEN = FS;      // 16384 — exactly 1 second = 1 Hz resolution
+
+        /* ════════════════════════════════════════════════════════
+           RADIX-2 FFT
+           Input: Float64Array of length FFTLEN (power of 2).
+           Output: one-sided amplitude spectrum in physical units.
+           Normalisation: DC = |X[0]|/N,  positive bins = 2|X[k]|/N
+           This gives magnitude = programmed amplitude for a pure
+           sine (e.g. 1 mA sine → single spike at 1.0 mA).
+           No windowing is applied. With integer-Hz frequencies and
+           an integer-second window, all energy sits in one bin.
+        ════════════════════════════════════════════════════════ */
+        function computeFFT(sig) {
+            const N = sig.length;
+            const re = new Float64Array(N), im = new Float64Array(N);
+            for (let i = 0; i < N; i++) re[i] = sig[i];
+
+            // Bit-reversal
+            for (let i = 1, j = 0; i < N; i++) {
+                let bit = N >> 1;
+                for (; j & bit; bit >>= 1) j ^= bit;
+                j ^= bit;
+                if (i < j) {
+                    let t = re[i]; re[i] = re[j]; re[j] = t;
+                    t = im[i]; im[i] = im[j]; im[j] = t;
+                }
+            }
+
+            // Butterfly
+            for (let len = 2; len <= N; len <<= 1) {
+                const half = len >> 1;
+                const ang = -PI2 / len;
+                const wRe = Math.cos(ang), wIm = Math.sin(ang);
+                for (let i = 0; i < N; i += len) {
+                    let cRe = 1, cIm = 0;
+                    for (let k = 0; k < half; k++) {
+                        const uRe = re[i + k], uIm = im[i + k];
+                        const vRe = re[i + k + half] * cRe - im[i + k + half] * cIm;
+                        const vIm = re[i + k + half] * cIm + im[i + k + half] * cRe;
+                        re[i + k] = uRe + vRe; im[i + k] = uIm + vIm;
+                        re[i + k + half] = uRe - vRe; im[i + k + half] = uIm - vIm;
+                        const nr = cRe * wRe - cIm * wIm;
+                        cIm = cRe * wIm + cIm * wRe; cRe = nr;
+                    }
+                }
+            }
+
+            // One-sided amplitude spectrum
+            const half = (N >> 1) + 1;
+            const mag = new Float64Array(half);
+            mag[0] = Math.sqrt(re[0] * re[0] + im[0] * im[0]) / N;            // DC (not plotted)
+            for (let i = 1; i < half; i++)
+                mag[i] = 2 * Math.sqrt(re[i] * re[i] + im[i] * im[i]) / N;      // double for one-sided
+            return mag;
+        }
+
+        /* ════════════════════════════════════════════════════════
+           CATMULL-ROM SPLINE  (sine-like signals only)
+        ════════════════════════════════════════════════════════ */
+        function splinePath(ctx, data, n, sx, sy) {
+            if (n < 2) return;
+            ctx.moveTo(sx(0), sy(data[0]));
+            if (n === 2) { ctx.lineTo(sx(1), sy(data[1])); return; }
+            for (let i = 0; i < n - 1; i++) {
+                const p0 = i > 0 ? data[i - 1] : data[i];
+                const p1 = data[i], p2 = data[i + 1];
+                const p3 = i < n - 2 ? data[i + 2] : data[i + 1];
+                ctx.bezierCurveTo(
+                    sx(i + 1 / 3), sy(p1 + (p2 - p0) / 6),
+                    sx(i + 1 - 1 / 3), sy(p2 - (p3 - p1) / 6),
+                    sx(i + 1), sy(p2)
+                );
+            }
+        }
+
+        /* ════════════════════════════════════════════════════════
+           PEAK-MIN RENDERING  (wide time-domain view)
+           For each screen pixel column, draws a vertical line
+           spanning the min–max of all samples in that column.
+           Prevents visual aliasing when many cycles compress into
+           few pixels.
+        ════════════════════════════════════════════════════════ */
+        function drawPeakMin(ctx, data, n, x0, PW, sy, color, lw) {
+            if (n < 1) return;
+            const cols = Math.ceil(PW);
+            const mn = new Float32Array(cols).fill(Infinity);
+            const mx = new Float32Array(cols).fill(-Infinity);
+            const scale = (cols - 1) / (n - 1);
+            for (let i = 0; i < n; i++) {
+                const px = Math.round(i * scale);
+                if (data[i] < mn[px]) mn[px] = data[i];
+                if (data[i] > mx[px]) mx[px] = data[i];
+            }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lw || 1.5;
+            ctx.setLineDash([]);
+            for (let px = 0; px < cols; px++) {
+                if (!isFinite(mn[px])) continue;
+                const x = x0 + px;
+                const y1 = sy(mx[px]), y2 = sy(mn[px]);
+                ctx.beginPath();
+                ctx.moveTo(x, y1);
+                ctx.lineTo(x, y2 < y1 + 1 ? y1 + 1 : y2);
+                ctx.stroke();
+            }
+        }
+
+        /* ════════════════════════════════════════════════════════
+           CANVAS PLOT ENGINE
+        ════════════════════════════════════════════════════════ */
+        const COL = { bg: '#1a1e2a', grid: '#1e2230', axis: '#606880', text: '#606880' };
+
+        function drawPlot(cv, series, xRange, yRange, logX, xLabel, yLabel) {
+            const cell = cv.parentElement;
+            const W = cell.clientWidth, H = cell.clientHeight;
+            if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+            if (W < 20 || H < 20) return;
+            const ctx = cv.getContext('2d');
+            ctx.clearRect(0, 0, W, H);
+
+            const P = { l: 44, r: 10, t: 8, b: 28 };
+            const PW = W - P.l - P.r, PH = H - P.t - P.b;
+            if (PW < 10 || PH < 10) return;
+
+            ctx.fillStyle = COL.bg; ctx.fillRect(P.l, P.t, PW, PH);
+
+            let yMin, yMax;
+            if (yRange) { yMin = yRange[0]; yMax = yRange[1]; }
+            else {
+                yMin = Infinity; yMax = -Infinity;
+                for (const s of series) for (let i = 0; i < s.data.length; i++) {
+                    if (s.data[i] < yMin) yMin = s.data[i];
+                    if (s.data[i] > yMax) yMax = s.data[i];
+                }
+                if (!isFinite(yMin) || yMin === yMax) { yMin = -1; yMax = 1; }
+                const p = (yMax - yMin) * 0.12 || 0.1; yMin -= p; yMax += p;
+            }
+
+            const [xMin, xMax] = xRange;
+            const lMin = logX ? Math.log10(Math.max(xMin, 1e-9)) : 0;
+            const lMax = logX ? Math.log10(xMax) : 0;
+            const toX = logX
+                ? v => P.l + (Math.log10(Math.max(v, 1e-9)) - lMin) / (lMax - lMin) * PW
+                : v => P.l + (v - xMin) / (xMax - xMin) * PW;
+            const toY = v => P.t + PH - (v - yMin) / (yMax - yMin) * PH;
+
+            // Y grid
+            ctx.font = '9px "IBM Plex Mono",monospace';
+            for (let i = 0; i <= 4; i++) {
+                const v = yMin + (yMax - yMin) * i / 4, y = toY(v);
+                ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(P.l + PW, y); ctx.stroke();
+                ctx.fillStyle = COL.text; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                ctx.fillText(v.toFixed(2), P.l - 4, y);
+            }
+
+            // X grid
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = COL.text;
+            if (logX) {
+                // Generate smart ticks for the visible range.
+                // Strategy: pick a linear step size that gives ~5-8 ticks across [xMin,xMax],
+                // snapped to a "nice" value (1,2,5 × 10^n). This works well whether the user
+                // is zoomed out to the full 1–8000 Hz range or zoomed in to e.g. 1990–2020 Hz.
+                const span = xMax - xMin;
+                const rawStep = span / 6;
+                const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+                const nice = [1, 2, 5, 10].map(f => f * mag).find(s => span / s <= 8) || mag * 10;
+                const tickStart = Math.ceil(xMin / nice) * nice;
+                // Prevent label overlap: track last drawn x position
+                let lastDrawnX = -Infinity;
+                const minGap = 38; // px
+                for (let v = tickStart; v <= xMax + 1e-9; v += nice) {
+                    if (v < xMin) continue;
+                    const x = toX(v);
+                    ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, P.t + PH); ctx.stroke();
+                    if (x - lastDrawnX >= minGap) {
+                        const lbl = v >= 1000 ? (v / 1000) + 'k' : v >= 1 ? v.toFixed(0) : v.toFixed(1);
+                        ctx.fillText(lbl, x, P.t + PH + 4);
+                        lastDrawnX = x;
+                    }
+                }
+            } else {
+                for (let i = 0; i <= 5; i++) {
+                    const v = xMin + (xMax - xMin) * i / 5, x = toX(v);
+                    ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, P.t + PH); ctx.stroke();
+                    const lbl = xMax < 0.1 ? (v * 1000).toFixed(2) : v.toFixed(3);
+                    ctx.fillText(lbl, x, P.t + PH + 4);
+                }
+            }
+
+            ctx.strokeStyle = COL.axis; ctx.lineWidth = 1; ctx.strokeRect(P.l, P.t, PW, PH);
+
+            // Axis labels
+            ctx.fillStyle = COL.axis; ctx.font = '9px "IBM Plex Mono",monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillText(xLabel || '', P.l + PW / 2, H - 1);
+            ctx.save(); ctx.translate(10, P.t + PH / 2); ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(yLabel || '', 0, 0); ctx.restore();
+
+            // Series
+            ctx.save(); ctx.beginPath(); ctx.rect(P.l, P.t, PW, PH); ctx.clip();
+            for (const s of series) {
+                const d = s.data, n = d.length; if (n < 2) continue;
+                if (s.peakmin) {
+                    drawPeakMin(ctx, d, n, P.l, PW, toY, s.color, s.width);
+                } else if (s.xdata) {
+                    ctx.strokeStyle = s.color; ctx.lineWidth = s.width || 1.5; ctx.setLineDash(s.dash || []);
+                    ctx.beginPath();
+                    let started = false;
+                    for (let i = 0; i < n; i++) {
+                        const fx = s.xdata[i]; if (fx < xMin || fx > xMax) continue;
+                        const px = toX(fx), py = toY(d[i]);
+                        if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+                    }
+                    ctx.stroke();
+                } else if (s.spline) {
+                    ctx.strokeStyle = s.color; ctx.lineWidth = s.width || 1.5; ctx.setLineDash(s.dash || []);
+                    ctx.beginPath();
+                    const sx = i => toX(xMin + i * (xMax - xMin) / (n - 1));
+                    splinePath(ctx, d, n, sx, toY);
+                    ctx.stroke();
+                } else {
+                    ctx.strokeStyle = s.color; ctx.lineWidth = s.width || 1.5; ctx.setLineDash(s.dash || []);
+                    ctx.beginPath();
+                    ctx.moveTo(toX(xMin), toY(d[0]));
+                    for (let i = 1; i < n; i++) ctx.lineTo(toX(xMin + i * (xMax - xMin) / (n - 1)), toY(d[i]));
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
+        }
+
+        /* ════════════════════════════════════════════════════════
+           SIMULATOR STATE
+        ════════════════════════════════════════════════════════ */
+        let buf1 = new Float32Array(BUFLEN);
+        let buf2 = new Float32Array(BUFLEN);
+        let bufSum = new Float32Array(BUFLEN);
+        let bufEnv = new Float32Array(BUFLEN);
+        let bufIdx = 0, simTime = 0, smpAccum = 0;
+        let lastWall = performance.now(), running = true, tiMode = 'normal';
+        // Phase accumulator for wave 2. Always incremental so that frequency
+        // changes (FSK mode) produce no amplitude discontinuity.
+        // FSK phase deviation accumulator.
+        // Wave 2 base phase uses the same closed-form as wave 1 (PI2*f1v*t + ph2v),
+        // which has no floating-point drift. During FSK pulses, wave 2 runs at f2v
+        // instead of f1v, creating a phase deviation of PI2*(f2v-f1v)/FS per sample.
+        // We accumulate only this deviation — so outside pulses it never changes,
+        // and the closed-form base keeps wave 2 perfectly locked to f1v with no drift.
+        let fskPhiDev = 0;
+        // Sample-domain pulse position counter (avoids fractional-sample pulse width errors)
+        let fskSamplePos = 0;
+        // dispHead tracks which sample index is the "current" display position.
+        // It advances by exactly the number of new samples generated each frame,
+        // so the display scrolls at the same rate new data is produced — which is
+        // speed-scaled. At speed=1 it matches real-time; at speed=0.1 it scrolls
+        // 10× slower, just like the Python app.
+        let dispHead = 0;
+        let dispHeadAccum = 0;  // sub-sample accumulator for smooth display advancement
+        let dispHeadFrac = 0;   // fractional part of dispHead position (0..1), used to
+        // sub-pixel-shift the left waveform plot each frame so
+        // it glides smoothly rather than stepping sample-by-sample
+        let totalWritten = 0;   // total samples ever written (used for initial clamp)
+
+        // Frequency axis for FFT display: bins 1..FFTLEN/2 → 1..8192 Hz
+        const FFTFREQS = new Float32Array(FFTLEN / 2);
+        for (let i = 0; i < FFTLEN / 2; i++) FFTFREQS[i] = (i + 1) * FS / FFTLEN;  // = i+1 Hz
+
+        // Stored FFT results
+        let storedFft1 = new Float64Array(FFTLEN / 2 + 1);
+        let storedFft2 = new Float64Array(FFTLEN / 2 + 1);
+        let storedFftS = new Float64Array(FFTLEN / 2 + 1);
+
+        // FFT gating
+        let paramsDirty = true, fftReady = false, samplesUntilFFT = FFTLEN;
+
+        function markParamsDirty() {
+            paramsDirty = true; fftReady = false; samplesUntilFFT = FFTLEN;
+            buf1.fill(0); buf2.fill(0); bufSum.fill(0); bufEnv.fill(0);
+            bufIdx = 0; simTime = 0; smpAccum = 0; dispHead = 0; dispHeadAccum = 0; dispHeadFrac = 0; totalWritten = 0;
+            fskPhiDev = 0;
+            fskSamplePos = 0;
+            setFftStatus('waiting', 0);
+        }
+
+        function setFftStatus(state, pct) {
+            const el = $('fft-status');
+            el.className = 'fft-status ' + (state === 'ready' ? 'ready' : 'waiting');
+            el.textContent = state === 'ready' ? '✓ FFT up to date' : `Collecting… ${pct}%`;
+        }
+
+        /* ── Window range auto-update ── */
+        function updateWindowRanges() {
+            const f1v = fv('f1', 2000), f2v = fv('f2', 2010);
+            const lMax = Math.min(10, Math.round(20000 / f1v * 10) / 10);
+            const slL = $('sl-winL'); slL.max = lMax;
+            if (parseFloat(slL.value) > lMax) slL.value = lMax;
+            $('sv-winL').textContent = parseFloat(slL.value).toFixed(1) + ' ms';
+            $('hint-L').textContent = '';
+            // In FSK mode, the difference frequency is always f1-f1=0 outside pulses,
+            // so don't let it clobber the Sum Time Range — leave it as-is.
+            if (tiMode !== 'fsk') {
+                const df = Math.abs(f1v - f2v);
+                const rMax = df > 0 ? Math.max(1, Math.round(2000 / df)) : 200;
+                const slR = $('sl-winR'); slR.max = rMax;
+                if (parseFloat(slR.value) > rMax) slR.value = rMax;
+                $('sv-winR').textContent = parseFloat(slR.value).toFixed(0) + ' ms';
+            }
+            $('hint-R').textContent = '';
+        }
+
+        /* ── Circular buffer helpers ── */
+        function appendSamples(y1, y2, ys, ye, n) {
+            const idx = bufIdx, end = idx + n;
+            if (end <= BUFLEN) {
+                buf1.set(y1.subarray(0, n), idx); buf2.set(y2.subarray(0, n), idx);
+                bufSum.set(ys.subarray(0, n), idx); bufEnv.set(ye.subarray(0, n), idx);
+            } else {
+                const p1 = BUFLEN - idx;
+                buf1.set(y1.subarray(0, p1), idx); buf1.set(y1.subarray(p1, n), 0);
+                buf2.set(y2.subarray(0, p1), idx); buf2.set(y2.subarray(p1, n), 0);
+                bufSum.set(ys.subarray(0, p1), idx); bufSum.set(ys.subarray(p1, n), 0);
+                bufEnv.set(ye.subarray(0, p1), idx); bufEnv.set(ye.subarray(p1, n), 0);
+            }
+            bufIdx = (idx + n) & (BUFLEN - 1);
+        }
+
+        function lastN(buf, N) {
+            const out = new Float32Array(N);
+            const start = (bufIdx - N + BUFLEN) & (BUFLEN - 1);
+            if (start + N <= BUFLEN) {
+                out.set(buf.subarray(start, start + N));
+            } else {
+                const p1 = BUFLEN - start;
+                out.set(buf.subarray(start), 0);
+                out.set(buf.subarray(0, N - p1), p1);
+            }
+            return out;
+        }
+
+        // Read N samples from buf ending at circular index 'head'.
+        function lastNAt(buf, N, head) {
+            const out = new Float32Array(N);
+            const start = (head - N + BUFLEN) & (BUFLEN - 1);
+            if (start + N <= BUFLEN) {
+                out.set(buf.subarray(start, start + N));
+            } else {
+                const p1 = BUFLEN - start;
+                out.set(buf.subarray(start), 0);
+                out.set(buf.subarray(0, N - p1), p1);
+            }
+            return out;
+        }
+
+        function decimate(arr, maxPts) {
+            if (arr.length <= maxPts) return arr;
+            const stride = Math.ceil(arr.length / maxPts);
+            const out = new Float32Array(Math.ceil(arr.length / stride));
+            for (let i = 0, j = 0; i < arr.length; i += stride) out[j++] = arr[i];
+            return out;
+        }
+
+        /* ════════════════════════════════════════════════════════
+           MAIN ANIMATION LOOP
+        ════════════════════════════════════════════════════════ */
+        let _tmp = null;
+
+        function tiFrame(now) {
+            requestAnimationFrame(tiFrame);
+            const dtReal = (now - lastWall) / 1000; lastWall = now;
+            if (!running || dtReal > 0.5) return;
+
+            const speed = $('sl-speed').value / 100;
+
+            // Always generate samples at full FS so the buffer is always full and fresh.
+            smpAccum += FS * dtReal;
+            const nNew = Math.floor(smpAccum); smpAccum -= nNew;
+
+            // dispHead advances at speed-scaled rate using its own accumulator.
+            // This is completely independent of nNew, so it advances smoothly every
+            // frame even when speed is very low and nNew==0.
+            // dispHead is always kept <= bufIdx so we never read unwritten memory.
+            dispHeadAccum += FS * dtReal * speed;
+            const dispAdvance = Math.floor(dispHeadAccum);
+            dispHeadFrac = dispHeadAccum - dispAdvance;  // 0..1, sub-sample scroll offset
+            dispHeadAccum = dispHeadFrac;
+            dispHead = (dispHead + dispAdvance) & (BUFLEN - 1);
+            // Clamp dispHead so it always lags bufIdx by between 0 and BUFLEN-1 samples.
+            // "lag" = how many samples behind the write head the display is.
+            // If lag > BUFLEN-1 the display has fallen more than a full buffer behind
+            // (can happen at very low speed) — snap it forward to stay in valid data.
+            // If lag > BUFLEN/2 and we haven't written much yet, also snap.
+            {
+                const lag = (bufIdx - dispHead + BUFLEN) & (BUFLEN - 1);
+                if (lag === 0 && totalWritten > BUFLEN) {
+                    // dispHead has lapped bufIdx — it's reading future/unwritten data.
+                    // This shouldn't happen since gen > display rate, but guard anyway.
+                    dispHead = bufIdx;
+                }
+                // If display has fallen more than (BUFLEN - max_display_samples) behind,
+                // snap it forward to avoid reading overwritten data.
+                const maxDisplaySamples = Math.floor(FS * 0.25); // 250ms max window
+                if (lag > BUFLEN - maxDisplaySamples) {
+                    dispHead = (bufIdx - maxDisplaySamples + BUFLEN) & (BUFLEN - 1);
+                }
+            }
+
+            /* ── Generate samples ── */
+            if (nNew > 0) {
+                if (!_tmp || _tmp.len < nNew)
+                    _tmp = {
+                        len: nNew,
+                        y1: new Float32Array(nNew), y2: new Float32Array(nNew),
+                        ys: new Float32Array(nNew), ye: new Float32Array(nNew)
+                    };
+                const { y1, y2, ys, ye } = _tmp;
+                const f1v = fv('f1', 2000), f2v = fv('f2', 2010);
+                const a1v = fv('a1', 1), a2v = fv('a2', 1), nlv = fv('nl', 0);
+                const ph1v = fv('ph1', 0) * Math.PI / 180, ph2v = fv('ph2', 90) * Math.PI / 180;
+                const prfv = fv('prf', 10), pwv = fv('pw', 10) / 1000;
+                // Convert PRF and pulse width to exact integer sample counts.
+                // All FSK gating is done in the sample domain so there is zero
+                // fractional-sample error and no pulse-to-pulse phase accumulation.
+                const fskPeriodSamples = Math.round(FS / prfv);
+                const fskPulseSamples = Math.min(Math.round(pwv * FS), fskPeriodSamples);
+
+                for (let i = 0; i < nNew; i++) {
+                    const t = simTime + (i + 1) / FS;
+
+                    // Wave 1: closed-form phase (frequency never changes)
+                    const phi1 = PI2 * f1v * t + ph1v;
+                    const c1r = a1v * Math.cos(phi1), c1i = a1v * Math.sin(phi1);
+
+                    // Wave 2 phase: closed-form base (no float drift) + FSK deviation.
+                    // Base = PI2*f1v*t + ph2v — identical structure to wave 1, perfectly stable.
+                    // During FSK pulses, accumulate the per-sample frequency deviation (f2v-f1v).
+                    // Outside pulses fskPhiDev is frozen, so wave 2 stays locked to f1v exactly.
+                    if (tiMode === 'fsk') {
+                        if (fskSamplePos < fskPulseSamples) {
+                            fskPhiDev += PI2 * (f2v - f1v) / FS;
+                        }
+                        fskSamplePos++;
+                        if (fskSamplePos >= fskPeriodSamples) {
+                            fskSamplePos = 0;
+                            // Snap accumulated phase deviation to nearest 2π multiple
+                            // so wave 2 returns to exact phase lock with wave 1 each period.
+                            fskPhiDev = Math.round(fskPhiDev / PI2) * PI2;
+                        }
+                    }
+                    const phi2base = PI2 * f1v * t + ph2v;
+                    const phi2 = tiMode === 'fsk' ? phi2base + fskPhiDev
+                        : PI2 * f2v * t + ph2v;
+                    const c2r = a2v * Math.cos(phi2), c2i = a2v * Math.sin(phi2);
+
+                    const sr = c1r + c2r, si = c1i + c2i, env = Math.sqrt(sr * sr + si * si);
+                    if (tiMode === 'normal') {
+                        y1[i] = c1r; y2[i] = c2r; ys[i] = sr + (nlv / 100) * sr * sr; ye[i] = env;
+                    } else if (tiMode === 'pwm') {
+                        const sq1 = (Math.sign(c1r) * .5 + .5) * a1v, sq2 = (Math.sign(c2r) * .5 + .5) * a2v;
+                        y1[i] = sq1; y2[i] = sq2; ys[i] = sq1 * sq2;
+                        ye[i] = (a1v + a2v) * Math.cos(phi1 - phi2);
+                    } else {
+                        // FSK: both waves displayed, wave 2 has switched frequency
+                        y1[i] = c1r; y2[i] = c2r;
+                        ys[i] = sr; ye[i] = env;
+                    }
+                }
+                appendSamples(y1, y2, ys, ye, nNew);
+                simTime += nNew / FS;
+                totalWritten += nNew;
+
+                /* ── FFT gate: wait for FFTLEN fresh samples at current params ── */
+                if (paramsDirty) {
+                    samplesUntilFFT -= nNew;
+                    if (samplesUntilFFT <= 0) {
+                        // Extract last FFTLEN raw samples, convert to Float64 for FFT
+                        const raw1 = lastN(buf1, FFTLEN), raw2 = lastN(buf2, FFTLEN), rawS = lastN(bufSum, FFTLEN);
+                        const d1 = new Float64Array(FFTLEN), d2 = new Float64Array(FFTLEN), dS = new Float64Array(FFTLEN);
+                        for (let i = 0; i < FFTLEN; i++) { d1[i] = raw1[i]; d2[i] = raw2[i]; dS[i] = rawS[i]; }
+                        storedFft1 = computeFFT(d1);
+                        storedFft2 = computeFFT(d2);
+                        storedFftS = computeFFT(dS);
+                        paramsDirty = false; fftReady = true;
+                        setFftStatus('ready', 100);
+                    } else {
+                        setFftStatus('waiting', Math.round((1 - samplesUntilFFT / FFTLEN) * 100));
+                    }
+                }
+            }
+
+            /* ── Time-domain display ── */
+            const winLms = parseFloat($('sl-winL').value) || 5;
+            const winRms = parseFloat($('sl-winR').value) || 200;
+            const NL = Math.min(Math.floor(FS * winLms / 1000), BUFLEN);
+            const NR = Math.min(Math.floor(FS * winRms / 1000), BUFLEN);
+
+            const isSine = (tiMode !== 'pwm');
+
+            // Left: waves 1 & 2, decimated, spline for sine modes.
+            // Fetch NL+1 samples so there's always one sample before the window start.
+            // Then shift the x-axis by the sub-sample fractional offset so the waveform
+            // glides smoothly between integer sample positions — eliminating the
+            // stroboscopic "multiples of N%" effect caused by integer-only stepping.
+            const NLx = Math.min(NL + 1, BUFLEN);
+            const fracShift = dispHeadFrac / FS;          // seconds to shift x-axis origin
+            const xStart = -fracShift;                    // slightly negative: first sample
+            const xEnd = winLms / 1000 - fracShift;       // window end shifts by same amount
+            const d1 = decimate(lastNAt(buf1, NLx, dispHead), 800);
+            const d2 = decimate(lastNAt(buf2, NLx, dispHead), 800);
+            drawPlot($('cv-tw'),
+                [{ data: d1, color: '#ff6b6b', width: 1.5, spline: isSine },
+                { data: d2, color: '#4fc3f7', width: 1.5, spline: isSine }],
+                [xStart, xEnd], null, false,
+                winLms < 100 ? 'Time (ms)' : 'Time (s)', 'mA');
+
+            // Right: sum + envelope, peak-min rendering
+            const a1v = fv('a1', 1), a2v = fv('a2', 1);
+            const Asum = (Math.abs(a1v) + Math.abs(a2v)) * 1.2;
+            const dSum = lastNAt(bufSum, NR, dispHead), dEnv = lastNAt(bufEnv, NR, dispHead);
+            drawPlot($('cv-ts'),
+                [{ data: dSum, color: '#69db7c', width: 1.5, peakmin: isSine },
+                { data: dEnv, color: '#cc5de8', width: 1, peakmin: isSine }],
+                [0, winRms / 1000], [-Asum, Asum], false, 'Time (s)', 'mA');
+
+            /* ── FFT display (frozen until ready) ── */
+            if (fftReady) {
+                // Full FFT slice (1 Hz to Nyquist)
+                const fFull_Lo = 1, fFull_Hi = 8000;
+                const iLoFull = Math.max(1, Math.floor(fFull_Lo * FFTLEN / FS));
+                const iHiFull = Math.min(storedFft1.length - 1, Math.ceil(fFull_Hi * FFTLEN / FS));
+                const freqFull = FFTFREQS.subarray(iLoFull - 1, iHiFull);
+                const lenFull = iHiFull - iLoFull + 1;
+                const fn1 = new Float32Array(lenFull), fn2 = new Float32Array(lenFull), fnS = new Float32Array(lenFull);
+                let ym1 = 0, ymS = 0;
+                for (let i = 0; i < lenFull; i++) {
+                    fn1[i] = storedFft1[iLoFull + i];
+                    fn2[i] = storedFft2[iLoFull + i];
+                    fnS[i] = storedFftS[iLoFull + i];
+                    if (fn1[i] > ym1) ym1 = fn1[i];
+                    if (fn2[i] > ym1) ym1 = fn2[i];
+                    if (fnS[i] > ymS) ymS = fnS[i];
+                }
+                const a1v = fv('a1', 1), a2v = fv('a2', 1);
+                const fftYtop = Math.max(Math.abs(a1v) + Math.abs(a2v), ym1, ymS) * 1.2;
+
+                // Per-plot frequency ranges from dual-range sliders
+                const fwLo = fwRange[0], fwHi = fwRange[1];
+                const fsLo = fsRange[0], fsHi = fsRange[1];
+
+                drawPlot($('cv-fw'),
+                    [{ data: fn1, color: '#ff6b6b', xdata: freqFull },
+                    { data: fn2, color: '#4fc3f7', xdata: freqFull }],
+                    [fwLo, fwHi], [0, fftYtop], true, 'Frequency (Hz)', 'mA');
+
+                drawPlot($('cv-fs'),
+                    [{ data: fnS, color: '#69db7c', xdata: freqFull }],
+                    [fsLo, fsHi], [0, fftYtop], true, 'Frequency (Hz)', 'mA');
+            }
+        }
+        requestAnimationFrame(tiFrame);
+
+        /* ── Event wiring ── */
+        // Debounce: fires only after 400ms of silence, so typing "2010" doesn't
+        // trigger four FFT resets. Also fires immediately on Enter.
+        function debounce(fn, ms) { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; }
+        ['f1', 'f2', 'ph1', 'ph2', 'a1', 'a2', 'nl', 'prf', 'pw'].forEach(id => {
+            const handler = debounce(() => { markParamsDirty(); updateWindowRanges(); }, 400);
+            $(id).addEventListener('input', handler);
+            $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { markParamsDirty(); updateWindowRanges(); } });
+        });
+        let savedF2 = $('f2').value;  // remember f2 before entering FSK mode
+        ['normal', 'pwm', 'fsk'].forEach(m => {
+            $('btn-' + m).addEventListener('click', () => {
+                if (m === 'fsk') {
+                    // Save current f2 so we can restore it when leaving FSK
+                    savedF2 = $('f2').value;
+                    $('f2').value = 2100;
+                } else if (tiMode === 'fsk') {
+                    // Leaving FSK — restore the previous f2
+                    $('f2').value = savedF2;
+                }
+                tiMode = m;
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                $('btn-' + m).classList.add('active');
+                $('fsk-card').style.display = m === 'fsk' ? '' : 'none';
+                updateWindowRanges();
+                markParamsDirty();
+            });
+        });
+        $('sl-speed').addEventListener('input', e => { $('sv-speed').textContent = e.target.value + '%'; });
+        $('sl-winL').addEventListener('input', e => { $('sv-winL').textContent = parseFloat(e.target.value).toFixed(1) + ' ms'; });
+        $('sl-winR').addEventListener('input', e => { $('sv-winR').textContent = parseFloat(e.target.value).toFixed(0) + ' ms'; });
+        $('pp-btn').addEventListener('click', () => {
+            running = !running;
+            $('pp-btn').textContent = running ? '⏸ Pause' : '▶ Resume';
+            $('pp-btn').classList.toggle('paused', !running);
+            if (running) lastWall = performance.now();
+        });
+        updateWindowRanges();
+        markParamsDirty();
+
+        /* ── Dual-range frequency sliders ── */
+        let fwRange = [1, 8000];
+        let fsRange = [1, 8000];
+
+        function setupDualRange(idLo, idHi, fillId, labelId, onUpdate) {
+            const lo = $(idLo), hi = $(idHi), fill = $(fillId), lbl = $(labelId);
+            const MIN = parseInt(lo.min), MAX = parseInt(lo.max);
+
+            function update() {
+                let vLo = parseInt(lo.value), vHi = parseInt(hi.value);
+                // Prevent thumbs crossing — keep at least 10 Hz apart
+                if (vLo >= vHi - 10) {
+                    if (document.activeElement === lo) vLo = vHi - 10;
+                    else vHi = vLo + 10;
+                    lo.value = vLo; hi.value = vHi;
+                }
+                const pLo = (vLo - MIN) / (MAX - MIN) * 100;
+                const pHi = (vHi - MIN) / (MAX - MIN) * 100;
+                fill.style.left = pLo + '%';
+                fill.style.width = (pHi - pLo) + '%';
+                const fmt = v => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v;
+                lbl.textContent = fmt(vLo) + ' – ' + fmt(vHi) + ' Hz';
+                onUpdate(vLo, vHi);
+            }
+            lo.addEventListener('input', update);
+            hi.addEventListener('input', update);
+            update(); // initialise fill
+        }
+
+        setupDualRange('dr-fw-lo', 'dr-fw-hi', 'dr-fw-fill', 'sv-fwL', (lo, hi) => { fwRange = [lo, hi]; });
+        setupDualRange('dr-fs-lo', 'dr-fs-hi', 'dr-fs-fill', 'sv-fsL', (lo, hi) => { fsRange = [lo, hi]; });
+
+        /* ════════════════════════════════════════════════════════
+           CIRCUIT TAB
+        ════════════════════════════════════════════════════════ */
+        // ── Electrode Circuit: Tissue Layer Model ──
+        function ecSolve() {
+            const d = fv('ec-dist', 50);          // mm
+            const Itot = fv('ec-itotal', 2) / 1000;  // A
+            const Rskin = fv('ec-skin-base', 100) + fv('ec-skin-rho', 20) * d;
+            const Rskull = fv('ec-skull-base', 500) + fv('ec-skull-rho', 8) * d;
+            const Rbrain = fv('ec-brain-base', 2000) + fv('ec-brain-rho', 2) * d;
+            // Parallel: current splits by conductance
+            const Gskin = 1 / Rskin, Gskull = 1 / Rskull, Gbrain = 1 / Rbrain;
+            const Gtot = Gskin + Gskull + Gbrain;
+            const Iskin = Itot * Gskin / Gtot;
+            const Iskull = Itot * Gskull / Gtot;
+            const Ibrain = Itot * Gbrain / Gtot;
+            const Imax = Math.max(Iskin, Iskull, Ibrain);
+            // Update results panel
+            const grid = $('ec-results'); grid.innerHTML = '';
+            [
+                { label: 'Skin', I: Iskin, R: Rskin, col: '#f5a623' },
+                { label: 'Skull', I: Iskull, R: Rskull, col: '#69db7c' },
+                { label: 'Brain/CSF', I: Ibrain, R: Rbrain, col: '#4fc3f7' },
+            ].forEach(row => {
+                const c = document.createElement('div'); c.className = 'res-cell';
+                c.innerHTML = `<div class="res-lbl" style="color:${row.col}">${row.label}</div>
+                    <div class="res-v">${row.R.toFixed(0)} <span>Ω</span></div>
+                    <div class="res-i">${(row.I * 1000).toFixed(3)} mA</div>`;
+                grid.appendChild(c);
+            });
+            return { Rskin, Rskull, Rbrain, Iskin, Iskull, Ibrain, Imax, Itot, d };
+        }
+
+        function drawCircuit() {
+            const cv = $('cirt-canvas'), wrap = $('cirt-wrap');
+            cv.width = wrap.clientWidth || 600; cv.height = wrap.clientHeight || 400;
+            const W = cv.width, H = cv.height, ctx = cv.getContext('2d');
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, W, H);
+
+            const sol = ecSolve();
+            const { Iskin, Iskull, Ibrain, Imax, d } = sol;
+
+            // ── Layout ──
+            // Reserve space above for electrodes + annotation
+            const elecH = 12, elecAbove = 40;
+            const padX = 60, padYtop = elecAbove + elecH + 8, padYbot = 16;
+            const layerH = (H - padYtop - padYbot) / 3;
+            const ySkin = padYtop;
+            const ySkull = padYtop + layerH;
+            const yBrain = padYtop + layerH * 2;
+            const yBot = padYtop + layerH * 3;
+
+            // Electrode positions — sit right on top of the skin layer
+            const maxD = 200, minD = 5;
+            const fracD = (d - minD) / (maxD - minD);
+            const xSpan = (W - padX * 2) * 0.85;
+            const xMid = W / 2;
+            const xA = xMid - (fracD * 0.4 + 0.1) * xSpan;
+            const xB = xMid + (fracD * 0.4 + 0.1) * xSpan;
+            const elecW = 20;
+            const elecTop = ySkin - elecH;  // top of electrode rectangle
+
+            // ── Draw layers ──
+            // Swapped: skin = orange, skull = green
+            const layers = [
+                { y: ySkin, h: layerH, col: '#261e10', border: '#4a3818', label: 'Skin', textCol: '#f5a623' },
+                { y: ySkull, h: layerH, col: '#152018', border: '#254830', label: 'Skull', textCol: '#69db7c' },
+                { y: yBrain, h: layerH, col: '#101828', border: '#1e3050', label: 'Brain / CSF', textCol: '#4fc3f7' },
+            ];
+            layers.forEach(l => {
+                ctx.fillStyle = l.col;
+                ctx.fillRect(0, l.y, W, l.h);
+                ctx.strokeStyle = l.border; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(0, l.y); ctx.lineTo(W, l.y); ctx.stroke();
+                ctx.fillStyle = l.textCol;
+                ctx.font = 'bold 11px "IBM Plex Mono",monospace';
+                ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                ctx.fillText(l.label, 8, l.y + l.h / 2);
+            });
+            ctx.strokeStyle = '#1e3050'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(0, yBot); ctx.lineTo(W, yBot); ctx.stroke();
+
+            // ── One arc per layer, always starting and ending at electrode base ──
+            // Each arc is a single cubic bezier from (xA, ySkin) to (xB, ySkin),
+            // with control points pushed down into the respective layer so the arc
+            // belly sits in that layer. This makes it unambiguous that current
+            // always enters/exits at the electrodes.
+            //
+            //  Skin arc:   cp depth = midpoint of skin layer
+            //  Skull arc:  cp depth = midpoint of skull layer
+            //  Brain arc:  cp depth = midpoint of brain layer
+            function drawArc(current, color, cpY, labelR) {
+                const alpha = Math.min(1, current / Imax);
+                const lw = 1.5 + 4 * alpha;
+                const mx = (xA + xB) / 2;
+                // Label y — at belly of arc (cpY), slightly above centre
+                // belly_y = 0.25*ySkin + 0.75*cpY
+                const bellyY = 0.25 * ySkin + 0.75 * cpY;
+                const labelY = bellyY + layerH * 0.22;
+
+                ctx.save();
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 6 + 18 * alpha;
+                ctx.strokeStyle = color;
+                ctx.globalAlpha = 0.25 + 0.75 * alpha;
+                ctx.lineWidth = lw;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                // Both endpoints anchored at electrode base on the skin surface
+                ctx.moveTo(xA, ySkin);
+                ctx.bezierCurveTo(xA, cpY, xB, cpY, xB, ySkin);
+                ctx.stroke();
+
+                // Label at arc belly
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 0.65 + 0.35 * alpha;
+                ctx.fillStyle = color;
+                ctx.font = '9px "IBM Plex Mono",monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(`${labelR.toFixed(0)}Ω  ${(current * 1000).toFixed(2)}mA`, mx, labelY);
+                ctx.restore();
+            }
+
+            // Compute control point Y so the arc belly lands at the centre of each layer.
+            // For a symmetric cubic bezier from ySkin to ySkin with both CPs at cpY:
+            //   belly_y = 0.25*ySkin + 0.75*cpY
+            //   cpY = (belly_y - 0.25*ySkin) / 0.75
+            const cpSkin = ((ySkin + layerH * 0.5) - 0.25 * ySkin) / 0.75;
+            const cpSkull = ((ySkull + layerH * 0.5) - 0.25 * ySkin) / 0.75;
+            const cpBrain = ((yBrain + layerH * 0.5) - 0.25 * ySkin) / 0.75;
+            drawArc(Iskin, '#f5a623', cpSkin, sol.Rskin);
+            drawArc(Iskull, '#69db7c', cpSkull, sol.Rskull);
+            drawArc(Ibrain, '#4fc3f7', cpBrain, sol.Rbrain);
+
+            // ── Electrodes ──
+            [xA, xB].forEach((x, i) => {
+                const col = '#c8d8e8';
+                ctx.save();
+                ctx.shadowColor = col; ctx.shadowBlur = 14;
+                ctx.fillStyle = col;
+                ctx.fillRect(x - elecW / 2, elecTop, elecW, elecH);
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#0d0f14';
+                ctx.font = 'bold 9px "IBM Plex Mono",monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(i === 0 ? '+' : '−', x, elecTop + elecH / 2);
+                ctx.restore();
+                ctx.fillStyle = '#c8cfe0'; ctx.font = '9px "IBM Plex Mono",monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                ctx.fillText(i === 0 ? 'Anode' : 'Cathode', x, elecTop - 3);
+            });
+
+            // Distance annotation
+            ctx.strokeStyle = '#3a4055'; ctx.lineWidth = 1;
+            const annotY = elecTop - 16;
+            ctx.beginPath(); ctx.moveTo(xA, annotY); ctx.lineTo(xB, annotY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(xA, annotY - 4); ctx.lineTo(xA, annotY + 4); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(xB, annotY - 4); ctx.lineTo(xB, annotY + 4); ctx.stroke();
+            ctx.fillStyle = '#606880'; ctx.font = '9px "IBM Plex Mono",monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillText(`${d} mm`, (xA + xB) / 2, annotY - 2);
+        }
+
+        // Wire up circuit controls
+        ['ec-dist', 'ec-itotal', 'ec-skin-base', 'ec-skull-base', 'ec-brain-base',
+            'ec-skin-rho', 'ec-skull-rho', 'ec-brain-rho'].forEach(id => {
+                const el = $(id);
+                if (!el) return;
+                el.addEventListener('input', () => {
+                    if (id === 'ec-dist') $('ec-dist-val').textContent = el.value + ' mm';
+                    drawCircuit();
+                });
+            });
+
+        new ResizeObserver(() => { if ($('tab-circuit').classList.contains('active')) drawCircuit(); }).observe($('cirt-wrap'));
+        drawCircuit();
+    </script>
+</body>
+
+</html>

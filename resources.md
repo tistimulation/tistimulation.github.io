@@ -10,3 +10,4 @@ permalink: /resources/
 
 # Miscellaneous Resources
 * [ISN Lab GitHub](https://github.com/ISN-Group)
+* [TI Waveform Simulator](/simulator)
