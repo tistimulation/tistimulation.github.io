@@ -3,8 +3,8 @@ layout: none
 permalink: /simulator/
 ---
 
-<!--This document was made by Claude AI over lots of back and forth prompting from me. It is based
-on a Python script which was made by Copilot AI, also with lots of back and forth prompting.-->
+<!--This document was made by Claude AI. It is based
+on a Python script which was made by Copilot AI.-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -650,6 +650,35 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
             border: 2px solid var(--bg);
             cursor: pointer;
         }
+
+        /* ── Under-plot slider strips ── */
+        .plot-strip {
+            flex-shrink: 0;
+            padding: 4px 10px 6px;
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+        }
+
+        .plot-strip .shdr {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .plot-strip .sname {
+            color: var(--dim);
+            font-size: 10px;
+        }
+
+        .plot-strip .sval {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: var(--accent);
+        }
+
+        .plot-strip input[type=range] {
+            margin-top: 1px;
+        }
     </style>
 </head>
 
@@ -657,10 +686,10 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
     <div id="app">
 
         <div id="topbar">
-            <div class="logo">TI STIMULATION LAB</div>
+            <div class="logo">TEMPORAL INTERFERENCE SCOPE SIMULATION</div>
             <div class="sub">// interactive simulator</div>
             <div class="spacer"></div>
-            <div class="badge">BROWSER-ONLY · NO DATA SENT</div>
+            <div class="badge">DEMONSTRATIVE PURPOSES ONLY</div>
         </div>
 
         <div id="tabbar">
@@ -699,7 +728,7 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
                         <div class="frow"><span class="flabel">Phase 1 (°)</span><input class="finput" id="ph1"
                                 value="0"></div>
                         <div class="frow"><span class="flabel">Phase 2 (°)</span><input class="finput" id="ph2"
-                                value="90"></div>
+                                value="180"></div>
                         <div class="frow"><span class="flabel">Amplitude 1 (mA)</span><input class="finput" id="a1"
                                 value="1.0"></div>
                         <div class="frow"><span class="flabel">Amplitude 2 (mA)</span><input class="finput" id="a2"
@@ -723,58 +752,11 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
                                     id="sv-speed">21%</span></div>
                             <input type="range" id="sl-speed" min="3" max="39" step="3" value="21">
                         </div>
-                        <div class="srow">
-                            <div class="shdr">
-                                <span class="sname">Waves Time Range <span id="hint-L"
-                                        style="color:var(--accent);font-size:9px"></span></span>
-                                <span class="sval" id="sv-winL">10.0 ms</span>
-                            </div>
-                            <input type="range" id="sl-winL" min="1" max="10" step="0.1" value="10">
-                        </div>
-                        <div class="srow">
-                            <div class="shdr">
-                                <span class="sname">Sum Time Range <span id="hint-R"
-                                        style="color:var(--accent);font-size:9px"></span></span>
-                                <span class="sval" id="sv-winR">200 ms</span>
-                            </div>
-                            <input type="range" id="sl-winR" min="1" max="200" step="1" value="200">
-                        </div>
+
                         <button id="pp-btn">⏸ Pause</button>
                     </div>
 
-                    <div class="card">
-                        <div class="card-title">Waves Frequency Range</div>
-                        <div class="srow">
-                            <div class="shdr">
-                                <span class="sname">Range</span>
-                                <span class="sval" id="sv-fwL">1 – 8000 Hz</span>
-                            </div>
-                            <div class="dual-range" id="dr-fw">
-                                <div class="track">
-                                    <div class="track-fill" id="dr-fw-fill"></div>
-                                </div>
-                                <input type="range" id="dr-fw-lo" min="1" max="8000" value="1" step="1">
-                                <input type="range" id="dr-fw-hi" min="1" max="8000" value="8000" step="1">
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="card">
-                        <div class="card-title">Sum Frequency Range</div>
-                        <div class="srow">
-                            <div class="shdr">
-                                <span class="sname">Range</span>
-                                <span class="sval" id="sv-fsL">1 – 8000 Hz</span>
-                            </div>
-                            <div class="dual-range" id="dr-fs">
-                                <div class="track">
-                                    <div class="track-fill" id="dr-fs-fill"></div>
-                                </div>
-                                <input type="range" id="dr-fs-lo" min="1" max="8000" value="1" step="1">
-                                <input type="range" id="dr-fs-hi" min="1" max="8000" value="8000" step="1">
-                            </div>
-                        </div>
-                    </div>
 
 
                     <div class="card">
@@ -805,6 +787,13 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
                             <span class="dot" style="background:var(--b)"></span>Wave 2 · Time Domain
                         </div>
                         <div class="canvas-cell"><canvas id="cv-tw"></canvas></div>
+                        <div class="plot-strip">
+                            <div class="shdr">
+                                <span class="sname">Waves Time Range</span>
+                                <span class="sval" id="sv-winL">10.0 ms</span>
+                            </div>
+                            <input type="range" id="sl-winL" min="1" max="10" step="0.1" value="10">
+                        </div>
                     </div>
                     <div class="plot-wrap">
                         <div class="plot-hdr">
@@ -813,6 +802,13 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
                             <span class="dot" style="background:var(--p)"></span>Envelope · Time Domain
                         </div>
                         <div class="canvas-cell"><canvas id="cv-ts"></canvas></div>
+                        <div class="plot-strip">
+                            <div class="shdr">
+                                <span class="sname">Sum Time Range</span>
+                                <span class="sval" id="sv-winR">200 ms</span>
+                            </div>
+                            <input type="range" id="sl-winR" min="1" max="200" step="1" value="200">
+                        </div>
                     </div>
                     <div class="plot-wrap">
                         <div class="plot-hdr">
@@ -821,12 +817,38 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
                             <span class="dot" style="background:var(--b)"></span>Wave 2 · FFT
                         </div>
                         <div class="canvas-cell"><canvas id="cv-fw"></canvas></div>
+                        <div class="plot-strip">
+                            <div class="shdr">
+                                <span class="sname">Waves Frequency Range</span>
+                                <span class="sval" id="sv-fwL">1 – 8000 Hz</span>
+                            </div>
+                            <div class="dual-range" id="dr-fw">
+                                <div class="track">
+                                    <div class="track-fill" id="dr-fw-fill"></div>
+                                </div>
+                                <input type="range" id="dr-fw-lo" min="1" max="8000" value="1" step="1">
+                                <input type="range" id="dr-fw-hi" min="1" max="8000" value="8000" step="1">
+                            </div>
+                        </div>
                     </div>
                     <div class="plot-wrap">
                         <div class="plot-hdr">
                             <span class="dot" style="background:var(--g)"></span>Mixed Sum · FFT
                         </div>
                         <div class="canvas-cell"><canvas id="cv-fs"></canvas></div>
+                        <div class="plot-strip">
+                            <div class="shdr">
+                                <span class="sname">Sum Frequency Range</span>
+                                <span class="sval" id="sv-fsL">1 – 8000 Hz</span>
+                            </div>
+                            <div class="dual-range" id="dr-fs">
+                                <div class="track">
+                                    <div class="track-fill" id="dr-fs-fill"></div>
+                                </div>
+                                <input type="range" id="dr-fs-lo" min="1" max="8000" value="1" step="1">
+                                <input type="range" id="dr-fs-hi" min="1" max="8000" value="8000" step="1">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1185,10 +1207,10 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
         let storedFftS = new Float64Array(FFTLEN / 2 + 1);
 
         // FFT gating
-        let paramsDirty = true, fftReady = false, samplesUntilFFT = FFTLEN;
+        let paramsDirty = true, fftReady = false, fftJustUpdated = false, samplesUntilFFT = FFTLEN;
 
         function markParamsDirty() {
-            paramsDirty = true; fftReady = false; samplesUntilFFT = FFTLEN;
+            paramsDirty = true; fftReady = false; fftJustUpdated = false; samplesUntilFFT = FFTLEN;
             buf1.fill(0); buf2.fill(0); bufSum.fill(0); bufEnv.fill(0);
             bufIdx = 0; simTime = 0; smpAccum = 0; dispHead = 0; dispHeadAccum = 0; dispHeadFrac = 0; totalWritten = 0;
             fskPhiDev = 0;
@@ -1209,7 +1231,6 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
             const slL = $('sl-winL'); slL.max = lMax;
             if (parseFloat(slL.value) > lMax) slL.value = lMax;
             $('sv-winL').textContent = parseFloat(slL.value).toFixed(1) + ' ms';
-            $('hint-L').textContent = '';
             // In FSK mode, the difference frequency is always f1-f1=0 outside pulses,
             // so don't let it clobber the Sum Time Range — leave it as-is.
             if (tiMode !== 'fsk') {
@@ -1219,7 +1240,6 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
                 if (parseFloat(slR.value) > rMax) slR.value = rMax;
                 $('sv-winR').textContent = parseFloat(slR.value).toFixed(0) + ' ms';
             }
-            $('hint-R').textContent = '';
         }
 
         /* ── Circular buffer helpers ── */
@@ -1393,7 +1413,7 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
                         storedFft1 = computeFFT(d1);
                         storedFft2 = computeFFT(d2);
                         storedFftS = computeFFT(dS);
-                        paramsDirty = false; fftReady = true;
+                        paramsDirty = false; fftReady = true; fftJustUpdated = true;
                         setFftStatus('ready', 100);
                     } else {
                         setFftStatus('waiting', Math.round((1 - samplesUntilFFT / FFTLEN) * 100));
@@ -1455,6 +1475,55 @@ on a Python script which was made by Copilot AI, also with lots of back and fort
                 }
                 const a1v = fv('a1', 1), a2v = fv('a2', 1);
                 const fftYtop = Math.max(Math.abs(a1v) + Math.abs(a2v), ym1, ymS) * 1.2;
+
+                // Auto-update frequency ranges — only on the frame a fresh FFT just completed.
+                // fftJustUpdated is set once when the FFT finishes, then cleared here
+                // so subsequent frames leave the sliders alone for manual adjustment.
+                if (fftJustUpdated) {
+                    fftJustUpdated = false;
+
+                    // Waves FFT range (fn1 + fn2)
+                    const thresh = Math.max(ym1, 0.0001) * 0.01;
+                    let fMin = Infinity, fMax = 0;
+                    for (let i = 0; i < lenFull; i++) {
+                        if (fn1[i] > thresh || fn2[i] > thresh) {
+                            const f = freqFull[i];
+                            if (f < fMin) fMin = f;
+                            if (f > fMax) fMax = f;
+                        }
+                    }
+                    if (isFinite(fMin) && fMax > fMin) {
+                        const newLo = Math.max(1, Math.round(fMin * 0.9));
+                        const newHi = Math.min(8000, Math.round(fMax + fMin * 0.1));
+                        fwRange = [newLo, newHi];
+                        $('dr-fw-lo').value = newLo; $('dr-fw-hi').value = newHi;
+                        const pLo = (newLo - 1) / 7999 * 100, pHi = (newHi - 1) / 7999 * 100;
+                        $('dr-fw-fill').style.left = pLo + '%'; $('dr-fw-fill').style.width = (pHi - pLo) + '%';
+                        const fmt = v => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v;
+                        $('sv-fwL').textContent = fmt(newLo) + ' – ' + fmt(newHi) + ' Hz';
+                    }
+
+                    // Sum FFT range (fnS)
+                    const threshS = Math.max(ymS, 0.0001) * 0.01;
+                    let fMinS = Infinity, fMaxS = 0;
+                    for (let i = 0; i < lenFull; i++) {
+                        if (fnS[i] > threshS) {
+                            const f = freqFull[i];
+                            if (f < fMinS) fMinS = f;
+                            if (f > fMaxS) fMaxS = f;
+                        }
+                    }
+                    if (isFinite(fMinS) && fMaxS > fMinS) {
+                        const newLo = Math.max(1, Math.round(fMinS * 0.9));
+                        const newHi = Math.min(8000, Math.round(fMaxS + fMinS * 0.1));
+                        fsRange = [newLo, newHi];
+                        $('dr-fs-lo').value = newLo; $('dr-fs-hi').value = newHi;
+                        const pLo = (newLo - 1) / 7999 * 100, pHi = (newHi - 1) / 7999 * 100;
+                        $('dr-fs-fill').style.left = pLo + '%'; $('dr-fs-fill').style.width = (pHi - pLo) + '%';
+                        const fmt = v => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v;
+                        $('sv-fsL').textContent = fmt(newLo) + ' – ' + fmt(newHi) + ' Hz';
+                    }
+                }
 
                 // Per-plot frequency ranges from dual-range sliders
                 const fwLo = fwRange[0], fwHi = fwRange[1];
