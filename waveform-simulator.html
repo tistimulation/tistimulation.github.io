@@ -11,7 +11,7 @@ on a Python script which was made by Copilot AI.-->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TI Stimulation Simulator</title>
+    <title>TI Stimulation Virtual Bench</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
 
@@ -144,23 +144,6 @@ on a Python script which was made by Copilot AI.-->
         .tab-panel.active {
             display: flex;
             flex-direction: column
-        }
-
-        #ti-panel {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            padding: 12px;
-            gap: 12px
-        }
-
-        #ti-controls {
-            width: var(--ctrl-w);
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow-y: auto
         }
 
         #ti-controls::-webkit-scrollbar {
@@ -308,6 +291,29 @@ on a Python script which was made by Copilot AI.-->
             transform: scale(1.25)
         }
 
+        .sval.greyed {
+            color: var(--dim);
+            transition: color .2s
+        }
+
+        .sval {
+            transition: color .2s
+        }
+
+        input[type=range].greyed::-webkit-slider-thumb {
+            background: var(--dim);
+            box-shadow: none
+        }
+
+        input[type=range].greyed::-moz-range-thumb {
+            background: var(--dim);
+            box-shadow: none
+        }
+
+        input[type=range].greyed {
+            opacity: 0.5
+        }
+
         .fft-status {
             display: inline-block;
             font-family: 'IBM Plex Mono', monospace;
@@ -356,14 +362,70 @@ on a Python script which was made by Copilot AI.-->
             color: var(--text)
         }
 
-        #ti-plots {
+        /* ── New layout: full-height left controls + right content area ── */
+        #ti-panel {
+            display: flex;
+            flex-direction: row;
             flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
+            overflow: hidden;
+            padding: 12px;
+            gap: 12px
+        }
+
+        #ti-controls {
+            width: var(--ctrl-w);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
             gap: 8px;
+            overflow-y: auto;
+            height: 100%
+        }
+
+        /* Right content: stacks diagram row on top, sum plots on bottom */
+        #ti-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             overflow: hidden;
             min-width: 0
+        }
+
+        /* Top row: I1 plots | diagram | I2 plots */
+        #ti-top {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0
+        }
+
+        /* Wing plot columns (I1 left, I2 right) — 1 col, 2 rows */
+        .wing-plots {
+            width: 200px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+            overflow: hidden
+        }
+
+        .wing-plots .plot-wrap {
+            flex: 1;
+            min-height: 0
+        }
+
+        /* Bottom plots: sum time + sum freq side by side */
+        #ti-sum-plots {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            height: 200px;
+            flex-shrink: 0;
+            overflow: hidden
         }
 
         .plot-wrap {
@@ -567,10 +629,14 @@ on a Python script which was made by Copilot AI.-->
             opacity: .85
         }
 
-        @media(max-width:860px) {
+        @media(max-width:1000px) {
 
             #ti-panel,
             #circuit-panel {
+                flex-direction: column
+            }
+
+            #ti-top {
                 flex-direction: column
             }
 
@@ -580,13 +646,99 @@ on a Python script which was made by Copilot AI.-->
                 max-height: 35vh
             }
 
-            #ti-plots {
-                grid-template-columns: 1fr;
-                grid-template-rows: repeat(4, 1fr)
+            .wing-plots {
+                width: 100%;
+                flex-direction: row;
+                height: 160px;
+                flex-shrink: 0
+            }
+
+            #ti-sum-plots {
+                height: 180px
             }
         }
 
-        /* ── Dual-handle range slider ── */
+        /* ── TI Diagram Panel ── */
+        #ti-diagram {
+            flex: 1;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--rad);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+            min-height: 0
+        }
+
+        #ti-diagram-title {
+            padding: 5px 12px;
+            flex-shrink: 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--dim);
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border)
+        }
+
+        #ti-diagram-svg {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden
+        }
+
+        #ti-diagram-svg svg {
+            width: 100%;
+            height: 100%
+        }
+
+        /* ── Diagram SVG element styles ── */
+        .diag-head-circle {
+            fill: none;
+            stroke: var(--text);
+            stroke-width: 2
+        }
+
+        .diag-gen-circle {
+            fill: var(--surface);
+            stroke: var(--border2);
+            stroke-width: 1.5
+        }
+
+        .diag-gen-sine {
+            fill: none;
+            stroke-width: 1.5
+        }
+
+        .diag-lead {
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round
+        }
+
+        .diag-elec {
+            r: 5;
+            stroke-width: 2
+        }
+
+        .diag-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            fill: var(--dim);
+            letter-spacing: .04em
+        }
+
+        .diag-label-bold {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .04em
+        }
+
+        /* ─ existing legend / plot styles ─ */
         .dual-range {
             position: relative;
             height: 28px;
@@ -651,6 +803,75 @@ on a Python script which was made by Copilot AI.-->
             cursor: pointer;
         }
 
+        /* ── Probe toggle (inside SVG via foreignObject) ── */
+        .probe-toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            justify-content: center;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            user-select: none;
+        }
+
+        .probe-label {
+            color: var(--dim);
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            font-size: 9px;
+            transition: color .15s;
+        }
+
+        .probe-label.active {
+            color: var(--accent);
+        }
+
+        /* The track */
+        .probe-switch {
+            position: relative;
+            width: 38px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .probe-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+
+        .probe-track {
+            position: absolute;
+            inset: 0;
+            background: var(--border2);
+            border-radius: 9px;
+            transition: background .2s;
+            border: 1px solid var(--border2);
+        }
+
+        .probe-switch input:checked+.probe-track {
+            background: var(--accent2);
+            border-color: var(--accent2);
+        }
+
+        .probe-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--head);
+            transition: transform .2s;
+            pointer-events: none;
+        }
+
+        .probe-switch input:checked~.probe-thumb {
+            transform: translateX(20px);
+        }
+
         /* ── Under-plot slider strips ── */
         .plot-strip {
             flex-shrink: 0;
@@ -686,15 +907,15 @@ on a Python script which was made by Copilot AI.-->
     <div id="app">
 
         <div id="topbar">
-            <div class="logo">TEMPORAL INTERFERENCE SCOPE SIMULATION</div>
+            <div class="logo">TEMPORAL INTERFERENCE STIMULATION VIRTUAL BENCH</div>
             <div class="sub">// interactive simulator</div>
             <div class="spacer"></div>
             <div class="badge">DEMONSTRATIVE PURPOSES ONLY</div>
         </div>
 
         <div id="tabbar">
-            <button class="tab-btn active" data-tab="ti">Waveform Simulator</button>
-            <button class="tab-btn" data-tab="circuit">Electrode Circuit</button>
+            <button class="tab-btn active" data-tab="ti">Waveform Visualiser</button>
+            <button class="tab-btn" data-tab="circuit">Field Distribution Visualiser</button>
         </div>
 
         <!-- TAB 1 -->
@@ -729,9 +950,9 @@ on a Python script which was made by Copilot AI.-->
                                 value="0"></div>
                         <div class="frow"><span class="flabel">Phase 2 (°)</span><input class="finput" id="ph2"
                                 value="180"></div>
-                        <div class="frow"><span class="flabel">Amplitude 1 (mA)</span><input class="finput" id="a1"
+                        <div class="frow"><span class="flabel">Amplitude I1 (mA)</span><input class="finput" id="a1"
                                 value="1.0"></div>
-                        <div class="frow"><span class="flabel">Amplitude 2 (mA)</span><input class="finput" id="a2"
+                        <div class="frow"><span class="flabel">Amplitude I2 (mA)</span><input class="finput" id="a2"
                                 value="1.0"></div>
                         <div class="frow"><span class="flabel">Nonlinearity (%)</span><input class="finput" id="nl"
                                 value="0.0"></div>
@@ -763,10 +984,10 @@ on a Python script which was made by Copilot AI.-->
                         <div class="card-title">Legend</div>
                         <div class="leg">
                             <div class="leg-item">
-                                <div class="leg-line" style="background:var(--r)"></div>Wave 1
+                                <div class="leg-line" style="background:var(--r)"></div>Current I1 (Left)
                             </div>
                             <div class="leg-item">
-                                <div class="leg-line" style="background:var(--b)"></div>Wave 2
+                                <div class="leg-line" style="background:var(--b)"></div>Current I2 (Right)
                             </div>
                             <div class="leg-item">
                                 <div class="leg-line" style="background:var(--g)"></div>Sum
@@ -777,81 +998,223 @@ on a Python script which was made by Copilot AI.-->
                         </div>
                     </div>
 
-                </div><!-- /controls -->
+                </div><!-- /ti-controls -->
 
-                <div id="ti-plots">
-                    <div class="plot-wrap">
-                        <div class="plot-hdr">
-                            <span class="dot" style="background:var(--r)"></span>Wave 1
-                            <span class="sep">&amp;</span>
-                            <span class="dot" style="background:var(--b)"></span>Wave 2 · Time Domain
-                        </div>
-                        <div class="canvas-cell"><canvas id="cv-tw"></canvas></div>
-                        <div class="plot-strip">
-                            <div class="shdr">
-                                <span class="sname">Waves Time Range</span>
-                                <span class="sval" id="sv-winL">10.0 ms</span>
-                            </div>
-                            <input type="range" id="sl-winL" min="1" max="10" step="0.1" value="10">
-                        </div>
-                    </div>
-                    <div class="plot-wrap">
-                        <div class="plot-hdr">
-                            <span class="dot" style="background:var(--g)"></span>Sum
-                            <span class="sep">+</span>
-                            <span class="dot" style="background:var(--p)"></span>Envelope · Time Domain
-                        </div>
-                        <div class="canvas-cell"><canvas id="cv-ts"></canvas></div>
-                        <div class="plot-strip">
-                            <div class="shdr">
-                                <span class="sname">Sum Time Range</span>
-                                <span class="sval" id="sv-winR">200 ms</span>
-                            </div>
-                            <input type="range" id="sl-winR" min="1" max="200" step="1" value="200">
-                        </div>
-                    </div>
-                    <div class="plot-wrap">
-                        <div class="plot-hdr">
-                            <span class="dot" style="background:var(--r)"></span>Wave 1
-                            <span class="sep">&amp;</span>
-                            <span class="dot" style="background:var(--b)"></span>Wave 2 · FFT
-                        </div>
-                        <div class="canvas-cell"><canvas id="cv-fw"></canvas></div>
-                        <div class="plot-strip">
-                            <div class="shdr">
-                                <span class="sname">Waves Frequency Range</span>
-                                <span class="sval" id="sv-fwL">1 – 8000 Hz</span>
-                            </div>
-                            <div class="dual-range" id="dr-fw">
-                                <div class="track">
-                                    <div class="track-fill" id="dr-fw-fill"></div>
+                <!-- Right content area -->
+                <div id="ti-right">
+
+                    <!-- Top row: I1 wing | diagram | I2 wing -->
+                    <div id="ti-top">
+
+                        <!-- I1 plots: left wing (time top, freq bottom) -->
+                        <div class="wing-plots">
+                            <!-- I1 Time Domain -->
+                            <div class="plot-wrap">
+                                <div class="plot-hdr">
+                                    <span class="dot" style="background:var(--r)"></span><span id="hdr-tw-i1">I1 ·
+                                        Time</span>
                                 </div>
-                                <input type="range" id="dr-fw-lo" min="1" max="8000" value="1" step="1">
-                                <input type="range" id="dr-fw-hi" min="1" max="8000" value="8000" step="1">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="plot-wrap">
-                        <div class="plot-hdr">
-                            <span class="dot" style="background:var(--g)"></span>Mixed Sum · FFT
-                        </div>
-                        <div class="canvas-cell"><canvas id="cv-fs"></canvas></div>
-                        <div class="plot-strip">
-                            <div class="shdr">
-                                <span class="sname">Sum Frequency Range</span>
-                                <span class="sval" id="sv-fsL">1 – 8000 Hz</span>
-                            </div>
-                            <div class="dual-range" id="dr-fs">
-                                <div class="track">
-                                    <div class="track-fill" id="dr-fs-fill"></div>
+                                <div class="canvas-cell"><canvas id="cv-tw-i1"></canvas></div>
+                                <div class="plot-strip">
+                                    <div class="shdr">
+                                        <span class="sname">Time Range</span>
+                                        <span class="sval" id="sv-winL">10.0 ms</span>
+                                    </div>
+                                    <input type="range" id="sl-winL" min="1" max="10" step="0.1" value="10">
                                 </div>
-                                <input type="range" id="dr-fs-lo" min="1" max="8000" value="1" step="1">
-                                <input type="range" id="dr-fs-hi" min="1" max="8000" value="8000" step="1">
+                            </div>
+                            <!-- I1 Frequency Domain -->
+                            <div class="plot-wrap">
+                                <div class="plot-hdr">
+                                    <span class="dot" style="background:var(--r)"></span><span id="hdr-fw-i1">I1 ·
+                                        FFT</span>
+                                </div>
+                                <div class="canvas-cell"><canvas id="cv-fw-i1"></canvas></div>
+                                <div class="plot-strip">
+                                    <div class="shdr">
+                                        <span class="sname">Freq Range</span>
+                                        <span class="sval" id="sv-fwL">1 – 8000 Hz</span>
+                                    </div>
+                                    <div class="dual-range" id="dr-fw">
+                                        <div class="track">
+                                            <div class="track-fill" id="dr-fw-fill"></div>
+                                        </div>
+                                        <input type="range" id="dr-fw-lo" min="1" max="8000" value="1" step="1">
+                                        <input type="range" id="dr-fw-hi" min="1" max="8000" value="8000" step="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /I1 wing -->
+
+                        <!-- Electrode Placement Diagram (center) -->
+                        <div id="ti-diagram">
+                            <div id="ti-diagram-title">Virtual Load and Scope</div>
+                            <div id="ti-diagram-svg">
+                                <svg viewBox="0 0 560 340" xmlns="http://www.w3.org/2000/svg"
+                                    preserveAspectRatio="xMidYMid meet">
+                                    <!-- ─── Probe Toggle — above the stimulation load ─── -->
+                                    <foreignObject x="195" y="34" width="170" height="36">
+                                        <div xmlns="http://www.w3.org/1999/xhtml" class="probe-toggle-wrap">
+                                            <span class="probe-label active" id="lbl-current">Current</span>
+                                            <label class="probe-switch">
+                                                <input type="checkbox" id="probe-toggle">
+                                                <div class="probe-track"></div>
+                                                <div class="probe-thumb"></div>
+                                            </label>
+                                            <span class="probe-label" id="lbl-voltage">Voltage</span>
+                                        </div>
+                                    </foreignObject>
+
+                                    <!-- ─── Head circle (stimulation load) ─── -->
+                                    <circle cx="280" cy="170" r="100" class="diag-head-circle" />
+
+                                    <!-- ─── Generator labels at top ─── -->
+                                    <text x="80" y="22" class="diag-label-bold" text-anchor="middle" fill="#ff6b6b">I1 ·
+                                        LEFT</text>
+                                    <text x="480" y="22" class="diag-label-bold" text-anchor="middle" fill="#4fc3f7">I2
+                                        ·
+                                        RIGHT</text>
+
+                                    <!-- ══════════════════════════════════════════
+                                     LEFT generator (red / wave 1)
+                                ═══════════════════════════════════════════ -->
+                                    <!-- Generator circle -->
+                                    <circle cx="80" cy="170" r="36" class="diag-gen-circle" stroke="#ff6b6b" />
+                                    <!-- Sine wave inside generator: one clean cycle (crest then trough), red -->
+                                    <path d="M 60 170 C 66 156, 72 156, 78 170 C 84 184, 90 184, 96 170"
+                                        class="diag-gen-sine" stroke="#ff6b6b" />
+
+                                    <!-- Anode lead: generator → 225° electrode (top-left, ≈209, 99) -->
+                                    <polyline points="116,170 160,170 160,99 209,99" class="diag-lead" stroke="#ff6b6b"
+                                        stroke-dasharray="none" />
+                                    <!-- Cathode lead: generator → 135° electrode (bottom-left, ≈209, 241) -->
+                                    <polyline points="116,170 160,170 160,241 209,241" class="diag-lead"
+                                        stroke="#ff6b6b" stroke-dasharray="5,3" />
+
+                                    <!-- Anode electrode dot at 225° (top-left) -->
+                                    <circle cx="209" cy="99" r="6" class="diag-elec" fill="#ff6b6b" stroke="#0d0f14" />
+                                    <!-- Cathode electrode dot at 135° (bottom-left) -->
+                                    <circle cx="209" cy="241" r="6" class="diag-elec" fill="#ff6b6b" stroke="#0d0f14"
+                                        opacity="0.55" />
+
+                                    <!-- Labels -->
+                                    <text x="190" y="88" class="diag-label" text-anchor="middle"
+                                        fill="#ff6b6b">ANODE+</text>
+                                    <text x="190" y="259" class="diag-label" text-anchor="middle" fill="#ff6b6b"
+                                        opacity="0.7">CATHODE−</text>
+
+                                    <!-- ══════════════════════════════════════════
+                                     RIGHT generator (blue / wave 2)
+                                ═══════════════════════════════════════════ -->
+                                    <!-- Generator circle -->
+                                    <circle cx="480" cy="170" r="36" class="diag-gen-circle" stroke="#4fc3f7" />
+                                    <!-- Sine wave inside generator: one clean cycle (crest then trough), blue -->
+                                    <path d="M 460 170 C 466 156, 472 156, 478 170 C 484 184, 490 184, 496 170"
+                                        class="diag-gen-sine" stroke="#4fc3f7" />
+
+                                    <!-- Anode lead: right generator → 45° electrode (≈351, 99) -->
+                                    <polyline points="444,170 400,170 400,99 351,99" class="diag-lead"
+                                        stroke="#4fc3f7" />
+                                    <!-- Cathode lead: right generator → −45° electrode (≈351, 241) -->
+                                    <polyline points="444,170 400,170 400,241 351,241" class="diag-lead"
+                                        stroke="#4fc3f7" stroke-dasharray="5,3" />
+
+                                    <!-- Anode electrode dot at 45° -->
+                                    <circle cx="351" cy="99" r="6" class="diag-elec" fill="#4fc3f7" stroke="#0d0f14" />
+                                    <!-- Cathode electrode dot at −45° -->
+                                    <circle cx="351" cy="241" r="6" class="diag-elec" fill="#4fc3f7" stroke="#0d0f14"
+                                        opacity="0.55" />
+
+                                    <!-- Labels -->
+                                    <text x="370" y="88" class="diag-label" text-anchor="middle"
+                                        fill="#4fc3f7">ANODE+</text>
+                                    <text x="370" y="259" class="diag-label" text-anchor="middle" fill="#4fc3f7"
+                                        opacity="0.7">CATHODE−</text>
+
+                                    <!-- ─── Head label ─── -->
+                                    <text x="280" y="175" class="diag-label" text-anchor="middle"
+                                        fill="#606880">STIMULATION</text>
+                                    <text x="280" y="189" class="diag-label" text-anchor="middle" fill="#606880">LOAD
+                                        (HEAD)</text>
+
+                                    <!-- ─── Interference zone hint (subtle cross mark) ─── -->
+                                    <circle cx="280" cy="170" r="14" fill="#cc5de8" opacity="0.12" />
+                                    <circle cx="280" cy="170" r="4" fill="#cc5de8" opacity="0.35" />
+
+                                    <!-- ─── Bottom note ─── -->
+                                    <text x="280" y="320" class="diag-label" text-anchor="middle" fill="#3a4055"
+                                        font-size="8">
+                                        Solid line = anode lead · Dashed line = cathode lead
+                                    </text>
+                                </svg>
+                            </div>
+                        </div><!-- /ti-diagram -->
+
+                        <!-- I2 plots: right wing (time top, freq bottom) -->
+                        <div class="wing-plots">
+                            <!-- I2 Time Domain -->
+                            <div class="plot-wrap">
+                                <div class="plot-hdr">
+                                    <span class="dot" style="background:var(--b)"></span><span id="hdr-tw-i2">I2 ·
+                                        Time</span>
+                                </div>
+                                <div class="canvas-cell"><canvas id="cv-tw-i2"></canvas></div>
+                            </div>
+                            <!-- I2 Frequency Domain -->
+                            <div class="plot-wrap">
+                                <div class="plot-hdr">
+                                    <span class="dot" style="background:var(--b)"></span><span id="hdr-fw-i2">I2 ·
+                                        FFT</span>
+                                </div>
+                                <div class="canvas-cell"><canvas id="cv-fw-i2"></canvas></div>
+                            </div>
+                        </div><!-- /I2 wing -->
+
+                    </div><!-- /ti-top -->
+
+                    <!-- Bottom: Sum time + Sum freq -->
+                    <div id="ti-sum-plots">
+                        <!-- Sum time domain (green + purple envelope) -->
+                        <div class="plot-wrap">
+                            <div class="plot-hdr">
+                                <span class="dot" style="background:var(--g)"></span>Sum
+                                <span class="sep">&amp;</span>
+                                <span class="dot" style="background:var(--p)"></span>Env · Time
+                            </div>
+                            <div class="canvas-cell"><canvas id="cv-ts"></canvas></div>
+                            <div class="plot-strip">
+                                <div class="shdr">
+                                    <span class="sname">Time Range</span>
+                                    <span class="sval" id="sv-winR">200 ms</span>
+                                </div>
+                                <input type="range" id="sl-winR" min="1" max="200" step="1" value="200">
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                        <!-- Sum frequency domain (green) -->
+                        <div class="plot-wrap">
+                            <div class="plot-hdr">
+                                <span class="dot" style="background:var(--g)"></span>Sum · FFT
+                            </div>
+                            <div class="canvas-cell"><canvas id="cv-fs"></canvas></div>
+                            <div class="plot-strip">
+                                <div class="shdr">
+                                    <span class="sname">Freq Range</span>
+                                    <span class="sval" id="sv-fsL">1 – 8000 Hz</span>
+                                </div>
+                                <div class="dual-range" id="dr-fs">
+                                    <div class="track">
+                                        <div class="track-fill" id="dr-fs-fill"></div>
+                                    </div>
+                                    <input type="range" id="dr-fs-lo" min="1" max="8000" value="1" step="1">
+                                    <input type="range" id="dr-fs-hi" min="1" max="8000" value="8000" step="1">
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /ti-sum-plots -->
+
+                </div><!-- /ti-right -->
+
+            </div><!-- /ti-panel -->
         </div>
 
         <!-- TAB 2 -->
@@ -910,6 +1273,23 @@ on a Python script which was made by Copilot AI.-->
         const fv = (id, fb = 0) => { const v = parseFloat($(id).value); return isNaN(v) ? fb : v; };
         const PI2 = Math.PI * 2;
 
+        /* ════════════════════════════════════════════════════════
+           H-BRIDGE LOAD MODEL
+           Hardcoded for now; structured for future UI integration.
+           V1 = R_self * I1_A + R_common * I2_A
+           V2 = R_self * I2_A + R_common * I1_A
+           where currents I1_A, I2_A are in Amps (mA ÷ 1000).
+           R_self   = total resistance seen by each source (Ω)
+           R_common = shared return-path resistance causing crosstalk (Ω)
+        ════════════════════════════════════════════════════════ */
+        const HBRIDGE = {
+            R_self: 2200,   // Ω — total load resistance per channel
+            R_common: 200,   // Ω — common resistance (crosstalk / AM coupling)
+        };
+
+        /* ── Probe mode: 'current' | 'voltage' ── */
+        let probeMode = 'current';
+
         /* ── Tabs ── */
         document.querySelectorAll('.tab-btn').forEach(b => {
             b.addEventListener('click', () => {
@@ -919,6 +1299,26 @@ on a Python script which was made by Copilot AI.-->
                 if (b.dataset.tab === 'circuit') { drawCircuit(); }
             });
         });
+
+        /* ── Probe toggle ── */
+        function updateProbeHeaders() {
+            const isV = probeMode === 'voltage';
+            $('lbl-current').classList.toggle('active', !isV);
+            $('lbl-voltage').classList.toggle('active', isV);
+            $('hdr-tw-i1').textContent = (isV ? 'V1' : 'I1') + ' · Time';
+            $('hdr-fw-i1').textContent = (isV ? 'V1' : 'I1') + ' · FFT';
+            $('hdr-tw-i2').textContent = (isV ? 'V2' : 'I2') + ' · Time';
+            $('hdr-fw-i2').textContent = (isV ? 'V2' : 'I2') + ' · FFT';
+            // Grey out the I1 time-range label and slider thumb in voltage mode
+            $('sv-winL').style.color = isV ? 'var(--dim)' : '';
+            $('sl-winL').classList.toggle('greyed', isV);
+        }
+
+        $('probe-toggle').addEventListener('change', function () {
+            probeMode = this.checked ? 'voltage' : 'current';
+            updateProbeHeaders();
+        });
+        updateProbeHeaders(); // initialise
 
         /* ════════════════════════════════════════════════════════
            SAMPLE RATE
@@ -1483,19 +1883,55 @@ on a Python script which was made by Copilot AI.-->
             const xEnd = winLms / 1000 - fracShift;       // window end shifts by same amount
             const d1 = decimate(lastNAt(buf1, NLx, dispHead), 800);
             const d2 = decimate(lastNAt(buf2, NLx, dispHead), 800);
-            drawPlot($('cv-tw'),
-                [{ data: d1, color: '#ff6b6b', width: 1.5, spline: isSine },
-                { data: d2, color: '#4fc3f7', width: 1.5, spline: isSine }],
-                [xStart, xEnd], null, false,
-                winLms < 100 ? 'Time (ms)' : 'Time (s)', 'mA');
+            // ── Probe: derive display data for wing plots ──
+            // In voltage mode: scale mA→A then apply H-bridge resistive model.
+            // The HBRIDGE config object is kept separate for easy future UI wiring.
+            let disp1, disp2, wingYLabel, wingTimeRange;
+            if (probeMode === 'voltage') {
+                // Use sum-style wide window so envelope beats are visible
+                const winVms = parseFloat($('sl-winR').value) || 200;
+                const NV = Math.min(Math.floor(FS * winVms / 1000), BUFLEN);
+                const NVx = Math.min(NV + 1, BUFLEN);
+                const raw1v = decimate(lastNAt(buf1, NVx, dispHead), 800);
+                const raw2v = decimate(lastNAt(buf2, NVx, dispHead), 800);
+                // Convert mA → A, then V = R_self*I_own + R_common*I_other
+                const { R_self, R_common } = HBRIDGE;
+                disp1 = new Float32Array(raw1v.length);
+                disp2 = new Float32Array(raw2v.length);
+                for (let i = 0; i < raw1v.length; i++) {
+                    const i1A = raw1v[i] / 1000;
+                    const i2A = raw2v[i] / 1000;
+                    disp1[i] = R_self * i1A + R_common * i2A;
+                    disp2[i] = R_self * i2A + R_common * i1A;
+                }
+                wingYLabel = 'V';
+                wingTimeRange = [0, winVms / 1000];
+            } else {
+                disp1 = d1;
+                disp2 = d2;
+                wingYLabel = 'mA';
+                wingTimeRange = [xStart, xEnd];
+            }
+
+            // I1/V1 left wing: time domain
+            drawPlot($('cv-tw-i1'),
+                [{ data: disp1, color: '#ff6b6b', width: 1.5, spline: isSine }],
+                wingTimeRange, null, false,
+                'Time (s)', wingYLabel);
+
+            // I2/V2 right wing: time domain
+            drawPlot($('cv-tw-i2'),
+                [{ data: disp2, color: '#4fc3f7', width: 1.5, spline: isSine }],
+                wingTimeRange, null, false,
+                'Time (s)', wingYLabel);
 
             // Right: sum + envelope, peak-min rendering
             const a1v = fv('a1', 1), a2v = fv('a2', 1);
             const Asum = (Math.abs(a1v) + Math.abs(a2v)) * 1.2;
             const dSum = lastNAt(bufSum, NR, dispHead), dEnv = lastNAt(bufEnv, NR, dispHead);
             drawPlot($('cv-ts'),
-                [{ data: dSum, color: '#69db7c', width: 1.5, peakmin: isSine },
-                { data: dEnv, color: '#cc5de8', width: 1, peakmin: isSine }],
+                [{ data: dSum, color: '#69db7c', width: 1.5, spline: isSine },
+                { data: dEnv, color: '#cc5de8', width: 1, spline: isSine }],
                 [0, winRms / 1000], [-Asum, Asum], false, 'Time (s)', 'mA');
 
             /* ── FFT display (frozen until ready) ── */
@@ -1568,10 +2004,39 @@ on a Python script which was made by Copilot AI.-->
                 const fwLo = fwRange[0], fwHi = fwRange[1];
                 const fsLo = fsRange[0], fsHi = fsRange[1];
 
-                drawPlot($('cv-fw'),
-                    [{ data: fn1, color: '#ff6b6b', xdata: freqFull },
-                    { data: fn2, color: '#4fc3f7', xdata: freqFull }],
-                    [fwLo, fwHi], [0, fftYtop], true, 'Frequency (Hz)', 'mA', true);
+                // ── Wing FFT display: probe-aware ──
+                let fft1_disp, fft2_disp, wingFftYLabel, wingFftYtop;
+                if (probeMode === 'voltage') {
+                    // Transform FFT magnitudes: mag is in mA, convert to V via H-bridge.
+                    // For a linear system: V1_mag ≈ R_self*|I1|/1000 + R_common*|I2|/1000
+                    // (superposition; valid since model is linear)
+                    const { R_self, R_common } = HBRIDGE;
+                    fft1_disp = new Float32Array(lenFull);
+                    fft2_disp = new Float32Array(lenFull);
+                    for (let i = 0; i < lenFull; i++) {
+                        fft1_disp[i] = R_self * fn1[i] / 1000 + R_common * fn2[i] / 1000;
+                        fft2_disp[i] = R_self * fn2[i] / 1000 + R_common * fn1[i] / 1000;
+                    }
+                    const a1v_ = fv('a1', 1), a2v_ = fv('a2', 1);
+                    wingFftYtop = Math.max(
+                        (R_self * Math.abs(a1v_) + R_common * Math.abs(a2v_)) / 1000,
+                        (R_self * Math.abs(a2v_) + R_common * Math.abs(a1v_)) / 1000
+                    ) * 1.4;
+                    wingFftYLabel = 'V';
+                } else {
+                    fft1_disp = fn1;
+                    fft2_disp = fn2;
+                    wingFftYtop = fftYtop;
+                    wingFftYLabel = 'mA';
+                }
+
+                drawPlot($('cv-fw-i1'),
+                    [{ data: fft1_disp, color: '#ff6b6b', xdata: freqFull }],
+                    [fwLo, fwHi], [0, wingFftYtop], true, 'Frequency (Hz)', wingFftYLabel, true);
+
+                drawPlot($('cv-fw-i2'),
+                    [{ data: fft2_disp, color: '#4fc3f7', xdata: freqFull }],
+                    [fwLo, fwHi], [0, wingFftYtop], true, 'Frequency (Hz)', wingFftYLabel, true);
 
                 drawPlot($('cv-fs'),
                     [{ data: fnS, color: '#69db7c', xdata: freqFull }],
