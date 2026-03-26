@@ -9,5 +9,5 @@ permalink: /resources/
 * [Sim4Life](https://tip.science/)
 
 # Miscellaneous Resources
+* [TI Virtual Test Bench](/simulator)
 * [ISN Lab GitHub](https://github.com/ISN-Group)
-* [TI Waveform Simulator](/simulator)

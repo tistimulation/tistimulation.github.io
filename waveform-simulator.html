@@ -138,12 +138,19 @@ on a Python script which was made by Copilot AI.-->
         .tab-panel {
             display: none;
             flex: 1;
-            overflow: hidden
+            overflow: hidden;
+            min-height: 0;
         }
 
         .tab-panel.active {
             display: flex;
-            flex-direction: column
+            flex-direction: column;
+        }
+
+        /* Field distribution tab needs its own scroll context */
+        #tab-circuit.active {
+            overflow-y: auto;
+            display: block;
         }
 
         #ti-controls::-webkit-scrollbar {
@@ -396,6 +403,7 @@ on a Python script which was made by Copilot AI.-->
         #ti-top {
             display: flex;
             flex-direction: row;
+            justify-content: center;
             gap: 12px;
             flex: 1;
             overflow: hidden;
@@ -404,8 +412,8 @@ on a Python script which was made by Copilot AI.-->
 
         /* Wing plot columns (I1 left, I2 right) — 1 col, 2 rows */
         .wing-plots {
-            width: 200px;
-            flex-shrink: 0;
+            flex: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -507,132 +515,9 @@ on a Python script which was made by Copilot AI.-->
             border-radius: 1px
         }
 
-        #circuit-panel {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            padding: 12px;
-            gap: 12px
-        }
-
-        #circuit-controls {
-            width: var(--ctrl-w);
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow-y: auto
-        }
-
-        #circuit-controls::-webkit-scrollbar {
-            width: 3px
-        }
-
-        #circuit-controls::-webkit-scrollbar-thumb {
-            background: var(--border2);
-            border-radius: 2px
-        }
-
-        #circuit-viz {
-            flex: 1;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--rad);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-width: 0
-        }
-
-        #cirt-title {
-            padding: 5px 12px;
-            flex-shrink: 0;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 9px;
-            font-weight: 600;
-            color: var(--dim);
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--border)
-        }
-
-        #cirt-wrap {
-            flex: 1;
-            position: relative;
-            min-height: 0;
-            overflow: hidden
-        }
-
-        #cirt-canvas {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%
-        }
-
-        .res-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px
-        }
-
-        .res-cell {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 6px 8px
-        }
-
-        .res-lbl {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 9px;
-            color: var(--dim);
-            margin-bottom: 2px
-        }
-
-        .res-v {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 12px;
-            color: var(--head);
-            font-weight: 600
-        }
-
-        .res-v span {
-            font-size: 9px;
-            color: var(--dim);
-            font-weight: 400
-        }
-
-        .res-i {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 10px;
-            color: var(--dim);
-            margin-top: 1px
-        }
-
-        #upd-btn {
-            width: 100%;
-            padding: 7px;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--bg);
-            background: var(--accent);
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            letter-spacing: .06em;
-            text-transform: uppercase
-        }
-
-        #upd-btn:hover {
-            opacity: .85
-        }
-
         @media(max-width:1000px) {
 
-            #ti-panel,
-            #circuit-panel {
+            #ti-panel {
                 flex-direction: column
             }
 
@@ -640,8 +525,7 @@ on a Python script which was made by Copilot AI.-->
                 flex-direction: column
             }
 
-            #ti-controls,
-            #circuit-controls {
+            #ti-controls {
                 width: 100%;
                 max-height: 35vh
             }
@@ -660,7 +544,8 @@ on a Python script which was made by Copilot AI.-->
 
         /* ── TI Diagram Panel ── */
         #ti-diagram {
-            flex: 1;
+            flex: 0 1 820px;
+            max-width: 820px;
             background: var(--panel);
             border: 1px solid var(--border);
             border-radius: var(--rad);
@@ -900,6 +785,191 @@ on a Python script which was made by Copilot AI.-->
         .plot-strip input[type=range] {
             margin-top: 1px;
         }
+
+        /* ── Field Distribution Visualiser (Tab 2) ── */
+        #fd-panel {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 12px;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        #fd-controls {
+            width: var(--ctrl-w);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+        }
+
+        #fd-run-btn {
+            width: 100%;
+            padding: 7px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--bg);
+            background: var(--accent);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            transition: opacity .12s;
+        }
+
+        #fd-run-btn:hover {
+            opacity: .85;
+        }
+
+        #fd-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        #fd-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .fd-panel-wrap {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--rad);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .fd-canvas-wrap {
+            position: relative;
+            width: 100%;
+        }
+
+        .fd-canvas {
+            display: block;
+            width: 100%;
+            cursor: crosshair;
+        }
+
+        .fd-info-bar {
+            font-size: 10px;
+            color: var(--dim);
+            padding: 4px 10px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            min-height: 22px;
+            font-family: 'IBM Plex Mono', monospace;
+            flex-shrink: 0;
+        }
+
+        .fd-legend {
+            display: flex;
+            gap: 10px;
+            padding: 5px 10px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .fd-legend .leg-item {
+            font-size: 10px;
+            color: var(--dim);
+        }
+
+        .leg-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 3px;
+            vertical-align: middle;
+        }
+
+        /* Waveform modal */
+        .fd-wave-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fd-wave-modal.open {
+            display: flex;
+        }
+
+        .fd-wave-box {
+            background: var(--panel);
+            border: 1px solid var(--accent);
+            border-radius: var(--rad);
+            padding: 16px;
+            width: 680px;
+            max-width: 95vw;
+        }
+
+        .fd-wave-close {
+            cursor: pointer;
+            color: var(--dim);
+            font-size: 18px;
+            line-height: 1;
+            border: none;
+            background: none;
+            transition: color .15s;
+        }
+
+        .fd-wave-close:hover {
+            color: var(--accent);
+        }
+
+        .fd-wave-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .fd-wave-canvas {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: block;
+            width: 100%;
+        }
+
+        .fd-eq {
+            font-size: 10px;
+            color: var(--accent);
+            margin-top: 5px;
+            font-family: 'IBM Plex Mono', monospace;
+            min-height: 16px;
+        }
+
+        @media(max-width:1000px) {
+            #fd-panel {
+                flex-direction: column;
+            }
+
+            #fd-controls {
+                width: 100%;
+                max-height: 40vh;
+            }
+
+            #fd-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -950,10 +1020,16 @@ on a Python script which was made by Copilot AI.-->
                                 value="0"></div>
                         <div class="frow"><span class="flabel">Phase 2 (°)</span><input class="finput" id="ph2"
                                 value="180"></div>
-                        <div class="frow"><span class="flabel">Amplitude I1 (mA)</span><input class="finput" id="a1"
-                                value="1.0"></div>
-                        <div class="frow"><span class="flabel">Amplitude I2 (mA)</span><input class="finput" id="a2"
-                                value="1.0"></div>
+                        <div class="srow">
+                            <div class="shdr"><span class="sname">Amplitude I1 (mA)</span><span class="sval"
+                                    id="sv-a1">1.0</span></div>
+                            <input type="range" id="a1" min="0.1" max="5" step="0.1" value="1.0">
+                        </div>
+                        <div class="srow">
+                            <div class="shdr"><span class="sname">Amplitude I2 (mA)</span><span class="sval"
+                                    id="sv-a2">1.0</span></div>
+                            <input type="range" id="a2" min="0.1" max="5" step="0.1" value="1.0">
+                        </div>
                         <div class="frow"><span class="flabel">Nonlinearity (%)</span><input class="finput" id="nl"
                                 value="0.0"></div>
                     </div>
@@ -984,10 +1060,10 @@ on a Python script which was made by Copilot AI.-->
                         <div class="card-title">Legend</div>
                         <div class="leg">
                             <div class="leg-item">
-                                <div class="leg-line" style="background:var(--r)"></div>Current I1 (Left)
+                                <div class="leg-line" style="background:var(--r)"></div>Waveform 1 (Left)
                             </div>
                             <div class="leg-item">
-                                <div class="leg-line" style="background:var(--b)"></div>Current I2 (Right)
+                                <div class="leg-line" style="background:var(--b)"></div>Waveform 2 (Right)
                             </div>
                             <div class="leg-item">
                                 <div class="leg-line" style="background:var(--g)"></div>Sum
@@ -1039,8 +1115,8 @@ on a Python script which was made by Copilot AI.-->
                                         <div class="track">
                                             <div class="track-fill" id="dr-fw-fill"></div>
                                         </div>
-                                        <input type="range" id="dr-fw-lo" min="1" max="8000" value="1" step="1">
-                                        <input type="range" id="dr-fw-hi" min="1" max="8000" value="8000" step="1">
+                                        <input type="range" id="dr-fw-lo" min="1" max="8000" value="1" step="5">
+                                        <input type="range" id="dr-fw-hi" min="1" max="8000" value="8000" step="5">
                                     </div>
                                 </div>
                             </div>
@@ -1205,8 +1281,8 @@ on a Python script which was made by Copilot AI.-->
                                     <div class="track">
                                         <div class="track-fill" id="dr-fs-fill"></div>
                                     </div>
-                                    <input type="range" id="dr-fs-lo" min="1" max="8000" value="1" step="1">
-                                    <input type="range" id="dr-fs-hi" min="1" max="8000" value="8000" step="1">
+                                    <input type="range" id="dr-fs-lo" min="1" max="8000" value="1" step="5">
+                                    <input type="range" id="dr-fs-hi" min="1" max="8000" value="8000" step="5">
                                 </div>
                             </div>
                         </div>
@@ -1217,51 +1293,139 @@ on a Python script which was made by Copilot AI.-->
             </div><!-- /ti-panel -->
         </div>
 
-        <!-- TAB 2 -->
+        <!-- TAB 2: Field Distribution Visualiser -->
         <div class="tab-panel" id="tab-circuit">
-            <div id="circuit-panel">
-                <div id="circuit-controls">
+            <div id="fd-panel">
+                <div id="fd-controls">
+
                     <div class="card">
-                        <div class="card-title">Stimulation</div>
-                        <div class="frow"><span class="flabel">Total Current (mA)</span><input class="finput"
-                                id="ec-itotal" value="2.0"></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-title">Electrode Separation</div>
+                        <div class="card-title">Pair A — Electrodes</div>
+                        <div class="frow"><span class="flabel">A (+)</span>
+                            <select class="finput" id="fd-sel-a" style="width:70px;text-align:left"></select>
+                        </div>
+                        <div class="frow"><span class="flabel">A (−)</span>
+                            <select class="finput" id="fd-sel-b" style="width:70px;text-align:left"></select>
+                        </div>
+                        <div class="frow" style="margin-top:8px">
+                            <span class="flabel">f₁ (Hz)</span>
+                            <input class="finput" type="text" id="fd-f1" value="2000">
+                        </div>
                         <div class="srow">
-                            <div class="shdr"><span class="sname">Distance</span><span class="sval" id="ec-dist-val">50
-                                    mm</span></div>
-                            <input type="range" id="ec-dist" min="5" max="200" value="50" step="1">
+                            <div class="shdr"><span class="sname">I₁ (mA)</span><span class="sval"
+                                    id="fd-sv-I1">1.0</span></div>
+                            <input type="range" id="fd-I1" min="0.1" max="5" step="0.1" value="1.0">
                         </div>
                     </div>
+
                     <div class="card">
-                        <div class="card-title">Layer Parameters</div>
+                        <div class="card-title">Pair B — Electrodes</div>
+                        <div class="frow"><span class="flabel">B (+)</span>
+                            <select class="finput" id="fd-sel-c" style="width:70px;text-align:left"></select>
+                        </div>
+                        <div class="frow"><span class="flabel">B (−)</span>
+                            <select class="finput" id="fd-sel-d" style="width:70px;text-align:left"></select>
+                        </div>
+                        <div class="frow" style="margin-top:8px">
+                            <span class="flabel">f₂ (Hz)</span>
+                            <input class="finput" type="text" id="fd-f2" value="2010">
+                        </div>
+                        <div class="srow">
+                            <div class="shdr"><span class="sname">I₂ (mA)</span><span class="sval"
+                                    id="fd-sv-I2">1.0</span></div>
+                            <input type="range" id="fd-I2" min="0.1" max="5" step="0.1" value="1.0">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Head Model</div>
+                        <div class="srow">
+                            <div class="shdr"><span class="sname">σ (S/m)</span><span class="sval"
+                                    id="fd-sv-sigma">0.275</span></div>
+                            <input type="range" id="fd-sigma" min="0.1" max="1.0" step="0.01" value="0.275">
+                        </div>
+                        <div class="srow">
+                            <div class="shdr"><span class="sname">Radius (m)</span><span class="sval"
+                                    id="fd-sv-hr">0.100</span></div>
+                            <input type="range" id="fd-hr" min="0.05" max="0.15" step="0.005" value="0.10">
+                        </div>
+                        <div class="srow">
+                            <div class="shdr"><span class="sname">Threshold</span><span class="sval"
+                                    id="fd-sv-thresh">50%</span></div>
+                            <input type="range" id="fd-thresh" min="0.1" max="0.9" step="0.05" value="0.5">
+                        </div>
+                    </div>
+
+                    <button id="fd-run-btn">▶ Recompute</button>
+
+                    <div class="card" style="margin-top:0">
                         <div
-                            style="font-size:10px;color:var(--dim);margin-bottom:8px;font-family:'IBM Plex Mono',monospace">
-                            R_path = R_base + ρ × distance</div>
-                        <div style="font-size:10px;color:var(--dim);margin-bottom:6px">Base resistance (Ω)</div>
-                        <div class="frow"><span class="flabel" style="color:#f5a623">Skin R_base</span><input
-                                class="finput" id="ec-skin-base" value="100"></div>
-                        <div class="frow"><span class="flabel" style="color:#69db7c">Skull R_base</span><input
-                                class="finput" id="ec-skull-base" value="500"></div>
-                        <div class="frow"><span class="flabel" style="color:#4fc3f7">Brain R_base</span><input
-                                class="finput" id="ec-brain-base" value="2000"></div>
-                        <div style="font-size:10px;color:var(--dim);margin:8px 0 6px">Resistivity (Ω/mm)</div>
-                        <div class="frow"><span class="flabel" style="color:#f5a623">Skin ρ</span><input class="finput"
-                                id="ec-skin-rho" value="20"></div>
-                        <div class="frow"><span class="flabel" style="color:#69db7c">Skull ρ</span><input class="finput"
-                                id="ec-skull-rho" value="14"></div>
-                        <div class="frow"><span class="flabel" style="color:#4fc3f7">Brain ρ</span><input class="finput"
-                                id="ec-brain-rho" value="2"></div>
+                            style="font-size:10px;color:var(--dim);line-height:1.6;font-family:'IBM Plex Mono',monospace">
+                            Click inside any panel to inspect the electric field waveform &amp; spectrum at that point.
+                        </div>
                     </div>
-                    <div class="card">
-                        <div class="card-title">Current Distribution</div>
-                        <div class="res-grid" id="ec-results"></div>
+
+                </div><!-- /fd-controls -->
+
+                <div id="fd-right">
+                    <div id="fd-grid">
+                        <div class="fd-panel-wrap">
+                            <div class="plot-hdr" id="fd-lbl-A">Pair A · |E₁| — carrier field</div>
+                            <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvA"></canvas></div>
+                            <div class="fd-info-bar" id="fd-info-A">Click inside head to inspect</div>
+                            <div class="fd-legend">
+                                <span class="leg-item"><span class="leg-dot" style="background:#4488ff"></span>Pair A
+                                    (+)</span>
+                                <span class="leg-item"><span class="leg-dot" style="background:#ff6644"></span>Pair A
+                                    (−)</span>
+                                <span class="leg-item"><span class="leg-dot" style="background:#888"></span>Other</span>
+                            </div>
+                        </div>
+                        <div class="fd-panel-wrap">
+                            <div class="plot-hdr" id="fd-lbl-B">Pair B · |E₂| — carrier field</div>
+                            <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvB"></canvas></div>
+                            <div class="fd-info-bar" id="fd-info-B">Click inside head to inspect</div>
+                            <div class="fd-legend">
+                                <span class="leg-item"><span class="leg-dot" style="background:#ff5533"></span>Pair B
+                                    (+)</span>
+                                <span class="leg-item"><span class="leg-dot" style="background:#4488ff"></span>Pair B
+                                    (−)</span>
+                                <span class="leg-item"><span class="leg-dot" style="background:#888"></span>Other</span>
+                            </div>
+                        </div>
+                        <div class="fd-panel-wrap">
+                            <div class="plot-hdr" id="fd-lbl-TI">TI envelope · X component</div>
+                            <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvTI"></canvas></div>
+                            <div class="fd-info-bar" id="fd-info-TI">Click inside head to inspect</div>
+                        </div>
+                        <div class="fd-panel-wrap">
+                            <div class="plot-hdr" id="fd-lbl-ST">Stimulated region · Y component</div>
+                            <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvST"></canvas></div>
+                            <div class="fd-info-bar" id="fd-info-ST">Green overlay = M ≥ threshold</div>
+                        </div>
                     </div>
-                </div>
-                <div id="circuit-viz">
-                    <div id="cirt-title">Tissue Layer Model · Current Path Visualisation</div>
-                    <div id="cirt-wrap"><canvas id="cirt-canvas"></canvas></div>
+                </div><!-- /fd-right -->
+            </div><!-- /fd-panel -->
+
+            <!-- Waveform modal -->
+            <div class="fd-wave-modal" id="fd-waveModal">
+                <div class="fd-wave-box">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                        <div class="card-title" id="fd-waveTitle" style="margin-bottom:0;border:none;padding:0">Field at
+                            point</div>
+                        <button class="fd-wave-close" id="fd-waveClose">✕</button>
+                    </div>
+                    <div class="fd-wave-grid">
+                        <div>
+                            <div class="card-title" style="margin-bottom:6px">Time domain</div>
+                            <canvas class="fd-wave-canvas" id="fd-cvWave" width="300" height="140"></canvas>
+                            <div class="fd-eq" id="fd-eqTime"></div>
+                        </div>
+                        <div>
+                            <div class="card-title" style="margin-bottom:6px">Frequency spectrum (FFT)</div>
+                            <canvas class="fd-wave-canvas" id="fd-cvFFT" width="300" height="140"></canvas>
+                            <div class="fd-eq" id="fd-eqFreq"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1272,6 +1436,64 @@ on a Python script which was made by Copilot AI.-->
         const $ = id => document.getElementById(id);
         const fv = (id, fb = 0) => { const v = parseFloat($(id).value); return isNaN(v) ? fb : v; };
         const PI2 = Math.PI * 2;
+
+        /* ── Shared signal parameters (single source of truth) ── */
+        const sharedParams = { f1: 2000, f2: 2010, a1: 1.0, a2: 1.0 };
+
+        function syncAllUI() {
+            $('f1').value = sharedParams.f1;
+            $('f2').value = sharedParams.f2;
+            $('a1').value = sharedParams.a1;
+            $('sv-a1').textContent = sharedParams.a1.toFixed(1);
+            $('a2').value = sharedParams.a2;
+            $('sv-a2').textContent = sharedParams.a2.toFixed(1);
+            $('fd-f1').value = sharedParams.f1;
+            $('fd-f2').value = sharedParams.f2;
+            $('fd-I1').value = sharedParams.a1;
+            $('fd-sv-I1').textContent = sharedParams.a1.toFixed(1);
+            $('fd-I2').value = sharedParams.a2;
+            $('fd-sv-I2').textContent = sharedParams.a2.toFixed(1);
+        }
+
+        function onTab2FreqChange() {
+            const f1v = parseFloat($('fd-f1').value);
+            const f2v = parseFloat($('fd-f2').value);
+            if (!isNaN(f1v)) sharedParams.f1 = f1v;
+            if (!isNaN(f2v)) sharedParams.f2 = f2v;
+            $('f1').value = sharedParams.f1;
+            $('f2').value = sharedParams.f2;
+            markParamsDirty();
+            updateWindowRanges();
+        }
+
+        function onTab2AmpChange() {
+            const a1v = parseFloat($('fd-I1').value);
+            const a2v = parseFloat($('fd-I2').value);
+            if (!isNaN(a1v)) sharedParams.a1 = a1v;
+            if (!isNaN(a2v)) sharedParams.a2 = a2v;
+            $('a1').value = sharedParams.a1;
+            $('sv-a1').textContent = sharedParams.a1.toFixed(1);
+            $('a2').value = sharedParams.a2;
+            $('sv-a2').textContent = sharedParams.a2.toFixed(1);
+            $('fd-sv-I1').textContent = sharedParams.a1.toFixed(1);
+            $('fd-sv-I2').textContent = sharedParams.a2.toFixed(1);
+            tab2AmpDirty();
+        }
+
+        function fdSyncFromWaveform() { syncAllUI(); }
+        function fdSyncToWaveform() { onTab2FreqChange(); onTab2AmpChange(); }
+
+        // Debounced markParamsDirty for Tab 2 amplitude sliders (defined here so
+        // onTab2AmpChange can reference it; reuses the same inline debounce pattern)
+        let _tab2AmpDirtyTimer;
+        function tab2AmpDirty() {
+            clearTimeout(_tab2AmpDirtyTimer);
+            _tab2AmpDirtyTimer = setTimeout(() => { markParamsDirty(); updateWindowRanges(); }, 400);
+        }
+
+        /* ── Dual-range FFT display ranges (declared early, used in tiFrame) ── */
+        let fwRange = [1, 8000];
+        let fsRange = [1, 8000];
 
         /* ════════════════════════════════════════════════════════
            H-BRIDGE LOAD MODEL
@@ -1296,7 +1518,11 @@ on a Python script which was made by Copilot AI.-->
                 document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
                 document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
                 b.classList.add('active'); $('tab-' + b.dataset.tab).classList.add('active');
-                if (b.dataset.tab === 'circuit') { drawCircuit(); }
+                if (b.dataset.tab === 'circuit') {
+                    // Sync parameters from waveform tab to field distribution tab
+                    fdSyncFromWaveform();
+                    fdCompute();
+                }
             });
         });
 
@@ -2049,21 +2275,79 @@ on a Python script which was made by Copilot AI.-->
         // Debounce: fires only after 400ms of silence, so typing "2010" doesn't
         // trigger four FFT resets. Also fires immediately on Enter.
         function debounce(fn, ms) { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; }
-        ['f1', 'f2', 'ph1', 'ph2', 'a1', 'a2', 'nl', 'prf', 'pw'].forEach(id => {
+        function clampFreq(id) {
+            const el = $(id);
+            const v = parseFloat(el.value);
+            if (!isNaN(v) && v > 8000) el.value = 8000;
+        }
+        // f1/f2: text inputs — debounced, trigger full FFT reset + sync
+        ['f1', 'f2'].forEach(id => {
+            const handler = debounce(() => {
+                clampFreq(id);
+                // Read back into sharedParams then mirror to other tab
+                const v = parseFloat($(id).value);
+                if (!isNaN(v)) sharedParams[id] = v;
+                syncAllUI();
+                markParamsDirty();
+                updateWindowRanges();
+            }, 400);
+            $(id).addEventListener('input', handler);
+            $(id).addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    clampFreq(id);
+                    const v = parseFloat($(id).value);
+                    if (!isNaN(v)) sharedParams[id] = v;
+                    syncAllUI();
+                    markParamsDirty();
+                    updateWindowRanges();
+                }
+            });
+        });
+        // a1/a2: range sliders — update labels + mirror to Tab 2 immediately,
+        // then trigger a debounced markParamsDirty so plots redraw after dragging stops
+        ['a1', 'a2'].forEach(id => {
+            const dirty = debounce(() => { markParamsDirty(); updateWindowRanges(); }, 400);
+            $(id).addEventListener('input', () => {
+                const v = parseFloat($(id).value);
+                if (!isNaN(v)) sharedParams[id] = v;
+                $('sv-a1').textContent = sharedParams.a1.toFixed(1);
+                $('sv-a2').textContent = sharedParams.a2.toFixed(1);
+                $('fd-I1').value = sharedParams.a1;
+                $('fd-sv-I1').textContent = sharedParams.a1.toFixed(1);
+                $('fd-I2').value = sharedParams.a2;
+                $('fd-sv-I2').textContent = sharedParams.a2.toFixed(1);
+                dirty();
+            });
+        });
+        // Other (non-shared) params — unchanged behaviour
+        ['ph1', 'ph2', 'nl', 'prf', 'pw'].forEach(id => {
             const handler = debounce(() => { markParamsDirty(); updateWindowRanges(); }, 400);
             $(id).addEventListener('input', handler);
-            $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { markParamsDirty(); updateWindowRanges(); } });
+            $(id).addEventListener('keydown', e => {
+                if (e.key === 'Enter') { markParamsDirty(); updateWindowRanges(); }
+            });
         });
-        let savedF2 = $('f2').value;  // remember f2 before entering FSK mode
+
+        // FSK save-state: each mode (normal/pwm vs fsk) remembers its own f1/f2 independently.
+        // First FSK entry defaults to 2000/2100; subsequent re-entries restore last FSK values.
+        let fskSavedFreqs = { f1: 2000, f2: 2100 };   // FSK mode's own saved f1/f2
+        let normSavedFreqs = { f1: sharedParams.f1, f2: sharedParams.f2 }; // normal/pwm saved f1/f2
         ['normal', 'pwm', 'fsk'].forEach(m => {
             $('btn-' + m).addEventListener('click', () => {
-                if (m === 'fsk') {
-                    // Save current f2 so we can restore it when leaving FSK
-                    savedF2 = $('f2').value;
-                    $('f2').value = 2100;
-                } else if (tiMode === 'fsk') {
-                    // Leaving FSK — restore the previous f2
-                    $('f2').value = savedF2;
+                const leavingFsk = tiMode === 'fsk' && m !== 'fsk';
+                const enteringFsk = m === 'fsk' && tiMode !== 'fsk';
+                if (enteringFsk) {
+                    // Save current non-FSK freqs, restore last FSK freqs
+                    normSavedFreqs = { f1: sharedParams.f1, f2: sharedParams.f2 };
+                    sharedParams.f1 = fskSavedFreqs.f1;
+                    sharedParams.f2 = fskSavedFreqs.f2;
+                    syncAllUI();
+                } else if (leavingFsk) {
+                    // Save current FSK freqs, restore non-FSK freqs
+                    fskSavedFreqs = { f1: sharedParams.f1, f2: sharedParams.f2 };
+                    sharedParams.f1 = normSavedFreqs.f1;
+                    sharedParams.f2 = normSavedFreqs.f2;
+                    syncAllUI();
                 }
                 tiMode = m;
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -2076,6 +2360,7 @@ on a Python script which was made by Copilot AI.-->
         $('sl-speed').addEventListener('input', e => { $('sv-speed').textContent = e.target.value + '%'; });
         $('sl-winL').addEventListener('input', e => { $('sv-winL').textContent = parseFloat(e.target.value).toFixed(1) + ' ms'; });
         $('sl-winR').addEventListener('input', e => { $('sv-winR').textContent = parseFloat(e.target.value).toFixed(0) + ' ms'; });
+
         $('pp-btn').addEventListener('click', () => {
             running = !running;
             $('pp-btn').textContent = running ? '⏸ Pause' : '▶ Resume';
@@ -2084,10 +2369,6 @@ on a Python script which was made by Copilot AI.-->
         });
         updateWindowRanges();
         markParamsDirty();
-
-        /* ── Dual-range frequency sliders ── */
-        let fwRange = [1, 8000];
-        let fsRange = [1, 8000];
 
         function setupDualRange(idLo, idHi, fillId, labelId, onUpdate) {
             const lo = $(idLo), hi = $(idHi), fill = $(fillId), lbl = $(labelId);
@@ -2118,182 +2399,504 @@ on a Python script which was made by Copilot AI.-->
         setupDualRange('dr-fs-lo', 'dr-fs-hi', 'dr-fs-fill', 'sv-fsL', (lo, hi) => { fsRange = [lo, hi]; });
 
         /* ════════════════════════════════════════════════════════
-           CIRCUIT TAB
+           FIELD DISTRIBUTION VISUALISER (Tab 2)
         ════════════════════════════════════════════════════════ */
-        // ── Electrode Circuit: Tissue Layer Model ──
-        function ecSolve() {
-            const d = fv('ec-dist', 50);          // mm
-            const Itot = fv('ec-itotal', 2) / 1000;  // A
-            const Rskin = fv('ec-skin-base', 100) + fv('ec-skin-rho', 20) * d;
-            const Rskull = fv('ec-skull-base', 500) + fv('ec-skull-rho', 8) * d;
-            const Rbrain = fv('ec-brain-base', 2000) + fv('ec-brain-rho', 2) * d;
-            // Parallel: current splits by conductance
-            const Gskin = 1 / Rskin, Gskull = 1 / Rskull, Gbrain = 1 / Rbrain;
-            const Gtot = Gskin + Gskull + Gbrain;
-            const Iskin = Itot * Gskin / Gtot;
-            const Iskull = Itot * Gskull / Gtot;
-            const Ibrain = Itot * Gbrain / Gtot;
-            const Imax = Math.max(Iskin, Iskull, Ibrain);
-            // Update results panel
-            const grid = $('ec-results'); grid.innerHTML = '';
-            [
-                { label: 'Skin', I: Iskin, R: Rskin, col: '#f5a623' },
-                { label: 'Skull', I: Iskull, R: Rskull, col: '#69db7c' },
-                { label: 'Brain/CSF', I: Ibrain, R: Rbrain, col: '#4fc3f7' },
-            ].forEach(row => {
-                const c = document.createElement('div'); c.className = 'res-cell';
-                c.innerHTML = `<div class="res-lbl" style="color:${row.col}">${row.label}</div>
-                    <div class="res-v">${row.R.toFixed(0)} <span>Ω</span></div>
-                    <div class="res-i">${(row.I * 1000).toFixed(3)} mA</div>`;
-                grid.appendChild(c);
-            });
-            return { Rskin, Rskull, Rbrain, Iskin, Iskull, Ibrain, Imax, Itot, d };
+        const FD_GRID_N = 180;
+        const FD_N_ELEC = 12;
+        let fdState = null;
+
+        function fdGetPositions(n, r) {
+            const pos = [];
+            for (let i = 0; i < n; i++) {
+                const a = (90 - i * 360 / n) * Math.PI / 180;
+                pos.push([r * Math.cos(a), r * Math.sin(a)]);
+            }
+            return pos;
         }
 
-        function drawCircuit() {
-            const cv = $('cirt-canvas'), wrap = $('cirt-wrap');
-            cv.width = wrap.clientWidth || 600; cv.height = wrap.clientHeight || 400;
-            const W = cv.width, H = cv.height, ctx = cv.getContext('2d');
-            ctx.clearRect(0, 0, W, H);
-            ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, W, H);
+        function fdDipoleField(ai, bi, XX, YY, pos, sigma) {
+            const EPS = 1e-4 * 0.1;
+            const k = 1 / (4 * Math.PI * sigma);
+            const pa = pos[ai], pb = pos[bi];
+            const N = XX.length;
+            const Ex = new Float32Array(N), Ey = new Float32Array(N);
+            for (let i = 0; i < N; i++) {
+                const dxa = XX[i] - pa[0], dya = YY[i] - pa[1];
+                const dxb = XX[i] - pb[0], dyb = YY[i] - pb[1];
+                const r3a = Math.pow(dxa * dxa + dya * dya + EPS * EPS, 1.5);
+                const r3b = Math.pow(dxb * dxb + dyb * dyb + EPS * EPS, 1.5);
+                Ex[i] = k * (dxa / r3a - dxb / r3b);
+                Ey[i] = k * (dya / r3a - dyb / r3b);
+            }
+            return [Ex, Ey];
+        }
 
-            const sol = ecSolve();
-            const { Iskin, Iskull, Ibrain, Imax, d } = sol;
+        function fdComputeTI(E1x, E1y, E2x, E2y, N) {
+            const EPS = 1e-10;
+            const M = new Float32Array(N);
+            for (let i = 0; i < N; i++) {
+                const m1 = Math.sqrt(E1x[i] * E1x[i] + E1y[i] * E1y[i]);
+                const m2 = Math.sqrt(E2x[i] * E2x[i] + E2y[i] * E2y[i]);
+                let ax = E1x[i], ay = E1y[i], bx = E2x[i], by = E2y[i], ma = m1, mb = m2;
+                if (m2 > m1) { ax = E2x[i]; ay = E2y[i]; bx = E1x[i]; by = E1y[i]; ma = m2; mb = m1; }
+                const dot = ax * bx + ay * by;
+                const cosA = Math.max(-1, Math.min(1, dot / (ma * mb + EPS)));
+                const alpha = Math.acos(cosA);
+                const case1 = mb < ma * cosA;
+                if (case1) {
+                    M[i] = 2 * mb;
+                } else {
+                    const dex = ax - bx, dey = ay - by;
+                    const cross = Math.abs(bx * dey - by * dex);
+                    const magDE = Math.sqrt(dex * dex + dey * dey) + EPS;
+                    M[i] = 2 * cross / magDE;
+                }
+            }
+            return M;
+        }
 
-            // ── Layout ──
-            // Reserve space above for electrodes + annotation
-            const elecH = 12, elecAbove = 40;
-            const padX = 60, padYtop = elecAbove + elecH + 8, padYbot = 16;
-            const layerH = (H - padYtop - padYbot) / 3;
-            const ySkin = padYtop;
-            const ySkull = padYtop + layerH;
-            const yBrain = padYtop + layerH * 2;
-            const yBot = padYtop + layerH * 3;
+        function fdComputeTI_xy(E1x, E1y, E2x, E2y, N) {
+            const Mx = new Float32Array(N), My = new Float32Array(N);
+            for (let i = 0; i < N; i++) {
+                Mx[i] = Math.abs(Math.abs(E1x[i] + E2x[i]) - Math.abs(E1x[i] - E2x[i]));
+                My[i] = Math.abs(Math.abs(E1y[i] + E2y[i]) - Math.abs(E1y[i] - E2y[i]));
+            }
+            return [Mx, My];
+        }
 
-            // Electrode positions — sit right on top of the skin layer
-            const maxD = 200, minD = 5;
-            const fracD = (d - minD) / (maxD - minD);
-            const xSpan = (W - padX * 2) * 0.85;
-            const xMid = W / 2;
-            const xA = xMid - (fracD * 0.4 + 0.1) * xSpan;
-            const xB = xMid + (fracD * 0.4 + 0.1) * xSpan;
-            const elecW = 20;
-            const elecTop = ySkin - elecH;  // top of electrode rectangle
+        function fdGetParams() {
+            return {
+                a: +$('fd-sel-a').value,
+                b: +$('fd-sel-b').value,
+                c: +$('fd-sel-c').value,
+                d: +$('fd-sel-d').value,
+                f1: +$('fd-f1').value,
+                f2: +$('fd-f2').value,
+                I1: +$('fd-I1').value * 1e-3,
+                I2: +$('fd-I2').value * 1e-3,
+                sigma: +$('fd-sigma').value,
+                hr: +$('fd-hr').value,
+                thresh: +$('fd-thresh').value,
+            };
+        }
 
-            // ── Draw layers ──
-            // Swapped: skin = orange, skull = green
-            const layers = [
-                { y: ySkin, h: layerH, col: '#261e10', border: '#4a3818', label: 'Skin', textCol: '#f5a623' },
-                { y: ySkull, h: layerH, col: '#152018', border: '#254830', label: 'Skull', textCol: '#69db7c' },
-                { y: yBrain, h: layerH, col: '#101828', border: '#1e3050', label: 'Brain / CSF', textCol: '#4fc3f7' },
-            ];
-            layers.forEach(l => {
-                ctx.fillStyle = l.col;
-                ctx.fillRect(0, l.y, W, l.h);
-                ctx.strokeStyle = l.border; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.moveTo(0, l.y); ctx.lineTo(W, l.y); ctx.stroke();
-                ctx.fillStyle = l.textCol;
-                ctx.font = 'bold 11px "IBM Plex Mono",monospace';
-                ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-                ctx.fillText(l.label, 8, l.y + l.h / 2);
-            });
-            ctx.strokeStyle = '#1e3050'; ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(0, yBot); ctx.lineTo(W, yBot); ctx.stroke();
+        function fdCompute() {
+            const p = fdGetParams();
+            const lim = p.hr * 1.3;
+            const N = FD_GRID_N;
+            const xs = [], ys = [];
+            for (let i = 0; i < N; i++) xs.push(-lim + i * 2 * lim / (N - 1));
+            for (let j = 0; j < N; j++) ys.push(-lim + j * 2 * lim / (N - 1));
 
-            // ── One arc per layer, always starting and ending at electrode base ──
-            // Each arc is a single cubic bezier from (xA, ySkin) to (xB, ySkin),
-            // with control points pushed down into the respective layer so the arc
-            // belly sits in that layer. This makes it unambiguous that current
-            // always enters/exits at the electrodes.
-            //
-            //  Skin arc:   cp depth = midpoint of skin layer
-            //  Skull arc:  cp depth = midpoint of skull layer
-            //  Brain arc:  cp depth = midpoint of brain layer
-            function drawArc(current, color, cpY, labelR) {
-                const alpha = Math.min(1, current / Imax);
-                const lw = 1.5 + 4 * alpha;
-                const mx = (xA + xB) / 2;
-                // Label y — at belly of arc (cpY), slightly above centre
-                // belly_y = 0.25*ySkin + 0.75*cpY
-                const bellyY = 0.25 * ySkin + 0.75 * cpY;
-                const labelY = bellyY + layerH * 0.22;
-
-                ctx.save();
-                ctx.shadowColor = color;
-                ctx.shadowBlur = 6 + 18 * alpha;
-                ctx.strokeStyle = color;
-                ctx.globalAlpha = 0.25 + 0.75 * alpha;
-                ctx.lineWidth = lw;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                // Both endpoints anchored at electrode base on the skin surface
-                ctx.moveTo(xA, ySkin);
-                ctx.bezierCurveTo(xA, cpY, xB, cpY, xB, ySkin);
-                ctx.stroke();
-
-                // Label at arc belly
-                ctx.shadowBlur = 0;
-                ctx.globalAlpha = 0.65 + 0.35 * alpha;
-                ctx.fillStyle = color;
-                ctx.font = '9px "IBM Plex Mono",monospace';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(`${labelR.toFixed(0)}Ω  ${(current * 1000).toFixed(2)}mA`, mx, labelY);
-                ctx.restore();
+            const XX = new Float32Array(N * N), YY = new Float32Array(N * N);
+            const MASK = new Uint8Array(N * N);
+            const r2 = (0.9 * p.hr) ** 2;
+            for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+                const idx = j * N + i;
+                XX[idx] = xs[i]; YY[idx] = ys[j];
+                MASK[idx] = (xs[i] * xs[i] + ys[j] * ys[j]) <= r2 ? 1 : 0;
             }
 
-            // Compute control point Y so the arc belly lands at the centre of each layer.
-            // For a symmetric cubic bezier from ySkin to ySkin with both CPs at cpY:
-            //   belly_y = 0.25*ySkin + 0.75*cpY
-            //   cpY = (belly_y - 0.25*ySkin) / 0.75
-            const cpSkin = ((ySkin + layerH * 0.5) - 0.25 * ySkin) / 0.75;
-            const cpSkull = ((ySkull + layerH * 0.5) - 0.25 * ySkin) / 0.75;
-            const cpBrain = ((yBrain + layerH * 0.5) - 0.25 * ySkin) / 0.75;
-            drawArc(Iskin, '#f5a623', cpSkin, sol.Rskin);
-            drawArc(Iskull, '#69db7c', cpSkull, sol.Rskull);
-            drawArc(Ibrain, '#4fc3f7', cpBrain, sol.Rbrain);
+            const pos = fdGetPositions(FD_N_ELEC, p.hr);
+            const [e1x, e1y] = fdDipoleField(p.a, p.b, XX, YY, pos, p.sigma);
+            const [e2x, e2y] = fdDipoleField(p.c, p.d, XX, YY, pos, p.sigma);
 
-            // ── Electrodes ──
-            [xA, xB].forEach((x, i) => {
-                const col = '#c8d8e8';
-                ctx.save();
-                ctx.shadowColor = col; ctx.shadowBlur = 14;
-                ctx.fillStyle = col;
-                ctx.fillRect(x - elecW / 2, elecTop, elecW, elecH);
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = '#0d0f14';
-                ctx.font = 'bold 9px "IBM Plex Mono",monospace';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(i === 0 ? '+' : '−', x, elecTop + elecH / 2);
-                ctx.restore();
-                ctx.fillStyle = '#c8cfe0'; ctx.font = '9px "IBM Plex Mono",monospace';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-                ctx.fillText(i === 0 ? 'Anode' : 'Cathode', x, elecTop - 3);
-            });
+            const E1x = new Float32Array(N * N), E1y = new Float32Array(N * N);
+            const E2x = new Float32Array(N * N), E2y = new Float32Array(N * N);
+            for (let i = 0; i < N * N; i++) {
+                E1x[i] = p.I1 * e1x[i]; E1y[i] = p.I1 * e1y[i];
+                E2x[i] = p.I2 * e2x[i]; E2y[i] = p.I2 * e2y[i];
+            }
 
-            // Distance annotation
-            ctx.strokeStyle = '#3a4055'; ctx.lineWidth = 1;
-            const annotY = elecTop - 16;
-            ctx.beginPath(); ctx.moveTo(xA, annotY); ctx.lineTo(xB, annotY); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(xA, annotY - 4); ctx.lineTo(xA, annotY + 4); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(xB, annotY - 4); ctx.lineTo(xB, annotY + 4); ctx.stroke();
-            ctx.fillStyle = '#606880'; ctx.font = '9px "IBM Plex Mono",monospace';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-            ctx.fillText(`${d} mm`, (xA + xB) / 2, annotY - 2);
+            const M = fdComputeTI(E1x, E1y, E2x, E2y, N * N);
+            const [Mx, My] = fdComputeTI_xy(E1x, E1y, E2x, E2y, N * N);
+
+            let Mmax = 0;
+            for (let i = 0; i < N * N; i++) if (MASK[i]) Mmax = Math.max(Mmax, M[i]);
+
+            const mag1 = new Float32Array(N * N), mag2 = new Float32Array(N * N);
+            for (let i = 0; i < N * N; i++) {
+                mag1[i] = Math.sqrt(E1x[i] * E1x[i] + E1y[i] * E1y[i]);
+                mag2[i] = Math.sqrt(E2x[i] * E2x[i] + E2y[i] * E2y[i]);
+            }
+
+            let Mxmax = 0, Mymax = 0;
+            for (let i = 0; i < N * N; i++) {
+                if (MASK[i]) { Mxmax = Math.max(Mxmax, Mx[i]); Mymax = Math.max(Mymax, My[i]); }
+            }
+
+            fdState = { p, N, lim, xs, ys, XX, YY, MASK, pos, E1x, E1y, E2x, E2y, mag1, mag2, M, Mmax, Mx, My, Mxmax, Mymax };
+            fdUpdateLabels(p);
+            fdDrawAll();
         }
 
-        // Wire up circuit controls
-        ['ec-dist', 'ec-itotal', 'ec-skin-base', 'ec-skull-base', 'ec-brain-base',
-            'ec-skin-rho', 'ec-skull-rho', 'ec-brain-rho'].forEach(id => {
+        function fdUpdateLabels(p) {
+            $('fd-lbl-A').innerHTML = `<span style="color:var(--dim)">Pair A · |E₁| — ${p.f1} Hz &nbsp;|&nbsp; E${p.a}(+) → E${p.b}(−)</span>`;
+            $('fd-lbl-B').innerHTML = `<span style="color:var(--dim)">Pair B · |E₂| — ${p.f2} Hz &nbsp;|&nbsp; E${p.c}(+) → E${p.d}(−)</span>`;
+            $('fd-lbl-TI').innerHTML = `<span style="color:var(--dim)">TI envelope X &nbsp;|&nbsp; Δf = ${Math.abs(p.f2 - p.f1)} Hz</span>`;
+            $('fd-lbl-ST').innerHTML = `<span style="color:var(--dim)">TI envelope Y &nbsp;|&nbsp; Δf = ${Math.abs(p.f2 - p.f1)} Hz</span>`;
+        }
+
+        function fdPercMax(arr, mask, pct) {
+            const vals = [];
+            for (let i = 0; i < arr.length; i++) if (mask[i]) vals.push(arr[i]);
+            vals.sort((a, b) => a - b);
+            return vals[Math.floor(pct * vals.length)] || 1;
+        }
+
+        function fdBlueColor(t) {
+            t = Math.max(0, Math.min(1, t));
+            return [Math.round((0.1 + 0.5 * t) * 255), Math.round((0.3 + 0.4 * t) * 255), 255];
+        }
+        function fdRedColor(t) {
+            t = Math.max(0, Math.min(1, t));
+            return [255, Math.round((0.3 * (1 - t)) * 255), Math.round((0.1 * (1 - t)) * 255)];
+        }
+        function fdViridisColor(t) {
+            t = Math.max(0, Math.min(1, t));
+            const c = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
+            const n = c.length - 1;
+            const i = Math.floor(t * n);
+            const f = t * n - i;
+            const c0 = c[i], c1 = c[Math.min(i + 1, n)];
+            return [Math.round(c0[0] + f * (c1[0] - c0[0])), Math.round(c0[1] + f * (c1[1] - c0[1])), Math.round(c0[2] + f * (c1[2] - c0[2]))];
+        }
+
+        function fdGridIdx(wx, wy, lim, N) {
+            const ix = Math.round((wx + lim) / (2 * lim) * (N - 1));
+            const iy = Math.round((wy + lim) / (2 * lim) * (N - 1));
+            if (ix < 0 || ix >= N || iy < 0 || iy >= N) return -1;
+            return iy * N + ix;
+        }
+
+        function fdDrawStreamlines(ctx, Fx, Fy, mask, N, lim, W) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+            ctx.lineWidth = 0.6;
+            const seeds = 22;
+            for (let si = 0; si < seeds; si++) {
+                for (let sj = 0; sj < seeds; sj++) {
+                    const sx = -lim * 0.85 + si * 2 * lim * 0.85 / seeds;
+                    const sy = -lim * 0.85 + sj * 2 * lim * 0.85 / seeds;
+                    if (sx * sx + sy * sy > (0.85 * lim * 0.9) ** 2) continue;
+                    ctx.beginPath();
+                    let x = sx, y = sy, started = false;
+                    for (let step = 0; step < 40; step++) {
+                        const gi = fdGridIdx(x, y, lim, N);
+                        if (gi < 0 || !mask[gi]) break;
+                        const px_ = (x + lim) / (2 * lim) * W, py_ = W - (y + lim) / (2 * lim) * W;
+                        const mag = Math.sqrt(Fx[gi] * Fx[gi] + Fy[gi] * Fy[gi]) + 1e-20;
+                        if (!started) { ctx.moveTo(px_, py_); started = true; } else ctx.lineTo(px_, py_);
+                        x += Fx[gi] / mag * lim * 0.04;
+                        y += Fy[gi] / mag * lim * 0.04;
+                    }
+                    if (started) ctx.stroke();
+                }
+            }
+        }
+
+        function fdDrawElectrodes(ctx, pos, colorMap, lim, W) {
+            pos.forEach(([ex, ey], k) => {
+                const px = (ex + lim) / (2 * lim) * W;
+                const py = W - (ey + lim) / (2 * lim) * W;
+                ctx.beginPath(); ctx.arc(px, py, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = colorMap[k] || '#888';
+                ctx.fill();
+                ctx.strokeStyle = '#c8cfe0'; ctx.lineWidth = 1.2; ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.font = '7px "IBM Plex Mono",monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(k, px, py);
+            });
+        }
+
+        function fdDrawField(canvasId, arr, mask, N, lim, colorFn, pctVmax, elecColors, pos, hr, flowX, flowY) {
+            const cv = $(canvasId);
+            const wrap = cv.parentElement;
+            const W = wrap.clientWidth || 300;
+            cv.width = W; cv.height = W;
+            const ctx = cv.getContext('2d');
+            const img = ctx.createImageData(W, W);
+            const vmax = fdPercMax(arr, mask, pctVmax);
+            for (let py = 0; py < W; py++) {
+                for (let px = 0; px < W; px++) {
+                    const wx = -lim + px * 2 * lim / W;
+                    const wy = lim - py * 2 * lim / W;
+                    const gi = fdGridIdx(wx, wy, lim, N);
+                    const idx = (py * W + px) * 4;
+                    if (gi < 0 || !mask[gi]) {
+                        img.data[idx] = 13; img.data[idx + 1] = 23; img.data[idx + 2] = 42; img.data[idx + 3] = 255;
+                    } else {
+                        const t = Math.pow(arr[gi] / vmax, 0.25);
+                        const [r, g, b] = colorFn(t);
+                        img.data[idx] = r; img.data[idx + 1] = g; img.data[idx + 2] = b; img.data[idx + 3] = 255;
+                    }
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            const cx = W / 2, cy = W / 2, cr = hr / lim * W / 2;
+            ctx.beginPath(); ctx.arc(cx, cy, cr, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(200,207,224,0.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+            ctx.stroke(); ctx.setLineDash([]);
+            if (flowX && flowY) fdDrawStreamlines(ctx, flowX, flowY, mask, N, lim, W);
+            fdDrawElectrodes(ctx, pos, elecColors, lim, W);
+        }
+
+        function fdDrawStim(canvasId, M, Mmax, mask, N, lim, pos, p) {
+            const cv = $(canvasId);
+            const wrap = cv.parentElement;
+            const W = wrap.clientWidth || 300;
+            cv.width = W; cv.height = W;
+            const ctx = cv.getContext('2d');
+            const img = ctx.createImageData(W, W);
+            const vmax = fdPercMax(M, mask, 0.95);
+            const thr = p.thresh * Mmax;
+            for (let py = 0; py < W; py++) {
+                for (let px = 0; px < W; px++) {
+                    const wx = -lim + px * 2 * lim / W;
+                    const wy = lim - py * 2 * lim / W;
+                    const gi = fdGridIdx(wx, wy, lim, N);
+                    const idx = (py * W + px) * 4;
+                    if (gi < 0 || !mask[gi]) {
+                        img.data[idx] = 13; img.data[idx + 1] = 23; img.data[idx + 2] = 42; img.data[idx + 3] = 255;
+                    } else {
+                        const t = Math.pow(M[gi] / vmax, 0.8);
+                        const [r, g, b] = fdViridisColor(t);
+                        if (M[gi] >= thr) {
+                            img.data[idx] = Math.min(255, r + 60); img.data[idx + 1] = Math.min(255, g + 120); img.data[idx + 2] = Math.min(255, b + 60);
+                        } else {
+                            img.data[idx] = r; img.data[idx + 1] = g; img.data[idx + 2] = b;
+                        }
+                        img.data[idx + 3] = 255;
+                    }
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            const cx = W / 2, cy = W / 2, cr = p.hr / lim * W / 2;
+            ctx.beginPath(); ctx.arc(cx, cy, cr, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(200,207,224,0.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+            ctx.stroke(); ctx.setLineDash([]);
+            const ec = {};
+            for (let i = 0; i < FD_N_ELEC; i++) ec[i] = '#444';
+            ec[p.a] = '#4488ff'; ec[p.b] = '#4488ff'; ec[p.c] = '#ff5533'; ec[p.d] = '#ff5533';
+            fdDrawElectrodes(ctx, pos, ec, lim, W);
+        }
+
+        function fdDrawAll() {
+            if (!fdState) return;
+            const { p, N, lim, MASK, pos, E1x, E1y, E2x, E2y, mag1, mag2, M, Mmax, Mx, My, Mxmax, Mymax } = fdState;
+            const ecA = {}, ecB = {};
+            for (let i = 0; i < FD_N_ELEC; i++) { ecA[i] = '#444'; ecB[i] = '#444'; }
+            ecA[p.a] = '#4488ff'; ecA[p.b] = '#ff6644';
+            ecB[p.c] = '#ff5533'; ecB[p.d] = '#4488ff';
+            fdDrawField('fd-cvA', mag1, MASK, N, lim, fdBlueColor, 0.95, ecA, pos, p.hr, E1x, E1y);
+            fdDrawField('fd-cvB', mag2, MASK, N, lim, fdRedColor, 0.95, ecB, pos, p.hr, E2x, E2y);
+            fdDrawStim('fd-cvTI', Mx, Mxmax, MASK, N, lim, pos, p);
+            fdDrawStim('fd-cvST', My, Mymax, MASK, N, lim, pos, p);
+        }
+
+        // ── Waveform modal ──────────────────────────────────────────
+        function fdPlotLineRaw(ctx, xs, ys, W, H, color, xmax, ymax, lw) {
+            const pad = { l: 38, r: 10, t: 10, b: 22 };
+            const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+            ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lw;
+            for (let i = 0; i < xs.length; i++) {
+                const px = pad.l + xs[i] / xmax * pw;
+                const py = pad.t + ph / 2 - (ys[i] / ymax) * (ph / 2);
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+        }
+
+        function fdPlotLine(ctx, xs, ys, W, H, color, xmax, ymax) {
+            const pad = { l: 38, r: 10, t: 10, b: 22 };
+            const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+            ctx.strokeStyle = '#1e2230'; ctx.lineWidth = 0.5;
+            for (let g = 0; g <= 4; g++) {
+                const y = pad.t + g * ph / 4;
+                ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.stroke();
+                const v = (ymax - g * 2 * ymax / 4).toExponential(1);
+                ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'right';
+                ctx.fillText(v, pad.l - 3, y + 3);
+            }
+            ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'center';
+            ctx.fillText('0', pad.l + pw / 2, H - 4);
+            ctx.fillText(xmax.toExponential(2) + 's', pad.l + pw, H - 4);
+            fdPlotLineRaw(ctx, xs, ys, W, H, color, xmax, ymax, 1.5);
+            ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + ph);
+            ctx.strokeStyle = '#2a2f3f'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(pad.l, pad.t + ph); ctx.lineTo(pad.l + pw, pad.t + ph); ctx.stroke();
+        }
+
+        function fdPlotSpectrumMulti(ctx, freqs, amps, colors, W, H, xmax) {
+            const pad = { l: 38, r: 10, t: 10, b: 22 };
+            const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+            const amax = Math.max(...amps) * 1.15;
+            ctx.strokeStyle = '#1e2230'; ctx.lineWidth = 0.5;
+            for (let g = 0; g <= 3; g++) {
+                const y = pad.t + g * ph / 3;
+                ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.stroke();
+                ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'right';
+                ctx.fillText((amax * (1 - g / 3)).toExponential(1), pad.l - 3, y + 3);
+            }
+            ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'center';
+            ctx.fillText('0', pad.l, H - 4);
+            ctx.fillText(Math.round(xmax) + 'Hz', pad.l + pw, H - 4);
+            freqs.forEach((f, i) => {
+                const px = pad.l + f / xmax * pw;
+                const barH = amps[i] / amax * ph;
+                ctx.strokeStyle = colors[i] || '#4fc3f7'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(px, pad.t + ph); ctx.lineTo(px, pad.t + ph - barH); ctx.stroke();
+                ctx.beginPath(); ctx.arc(px, pad.t + ph - barH, 3, 0, 2 * Math.PI);
+                ctx.fillStyle = colors[i] || '#4fc3f7'; ctx.fill();
+                ctx.fillStyle = '#c8cfe0'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'center';
+                ctx.fillText(f + 'Hz', px, pad.t + ph - barH - 6);
+            });
+            ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + ph);
+            ctx.strokeStyle = '#2a2f3f'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(pad.l, pad.t + ph); ctx.lineTo(pad.l + pw, pad.t + ph); ctx.stroke();
+        }
+
+        function fdShowWaveCarrier(A, f, pair, wx, wy) {
+            const modal = $('fd-waveModal');
+            $('fd-waveTitle').textContent = `Pair ${pair} carrier field  ·  x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m`;
+            $('fd-eqTime').textContent = `y = ${A.toExponential(3)} · sin(2π · ${f} · t)`;
+            $('fd-eqFreq').textContent = `Spike at f = ${f} Hz  |  A = ${A.toExponential(3)} V/m`;
+            modal.classList.add('open');
+            const cvW = $('fd-cvWave');
+            const W = cvW.offsetWidth || 300;
+            cvW.width = W; cvW.height = 140;
+            const ctx = cvW.getContext('2d');
+            ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, W, 140);
+            const T = 3 / f, npts = 8000;
+            const times = Array.from({ length: npts }, (_, i) => i * T / (npts - 1));
+            const vals = times.map(t => A * Math.sin(2 * Math.PI * f * t));
+            fdPlotLine(ctx, times, vals, W, 140, '#4fc3f7', T, A);
+            const cvF = $('fd-cvFFT');
+            cvF.width = W; cvF.height = 140;
+            const ctx2 = cvF.getContext('2d');
+            ctx2.fillStyle = '#0d0f14'; ctx2.fillRect(0, 0, W, 140);
+            fdPlotSpectrumMulti(ctx2, [f], [A], ['#f7b74f'], W, 140, f * 1.5);
+        }
+
+        function fdShowWaveEnvelope(M_amp, f1, f2, wx, wy) {
+            const df = Math.abs(f2 - f1);
+            const modal = $('fd-waveModal');
+            $('fd-waveTitle').textContent = `TI envelope  ·  x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m`;
+            $('fd-eqTime').textContent = `y = ${M_amp.toExponential(3)} · sin(2π · ${df} · t)  [modulation envelope]`;
+            $('fd-eqFreq').textContent = `Envelope spike at Δf = ${df} Hz  |  M = ${M_amp.toExponential(3)} V/m`;
+            modal.classList.add('open');
+            const cvW = $('fd-cvWave');
+            const W = cvW.offsetWidth || 300;
+            cvW.width = W; cvW.height = 140;
+            const ctx = cvW.getContext('2d');
+            ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, W, 140);
+            const Tmod = df > 0 ? 5 / df : 1 / f1;
+            const npts = 22000;
+            const times = Array.from({ length: npts }, (_, i) => i * Tmod / (npts - 1));
+            const vals = times.map(t => M_amp / 2 * (Math.sin(2 * Math.PI * f1 * t) + Math.sin(2 * Math.PI * f2 * t)));
+            const carrier = times.map(t => M_amp * Math.abs(Math.cos(Math.PI * df * t)));
+            fdPlotLine(ctx, times, vals, W, 140, 'rgba(255,255,255,0.6)', Tmod, M_amp > 0 ? M_amp : 1);
+            fdPlotLineRaw(ctx, times, carrier, W, 140, '#4fc3f7', Tmod, M_amp > 0 ? M_amp : 1, 1.5);
+            const cvF = $('fd-cvFFT');
+            cvF.width = W; cvF.height = 140;
+            const ctx2 = cvF.getContext('2d');
+            ctx2.fillStyle = '#0d0f14'; ctx2.fillRect(0, 0, W, 140);
+            const freqs = df > 0 ? [df, f1, f2] : [f1, f2];
+            const amps = df > 0 ? [M_amp, M_amp / 2, M_amp / 2] : [M_amp / 2, M_amp / 2];
+            const colors = df > 0 ? ['#4fc3f7', '#888', '#888'] : ['#888', '#888'];
+            fdPlotSpectrumMulti(ctx2, freqs, amps, colors, W, 140, Math.max(f1, f2) * 1.1 || 100);
+            $('fd-eqFreq').textContent = `Δf=${df}Hz (envelope) | f₁=${f1}Hz | f₂=${f2}Hz`;
+        }
+
+        function fdCanvasClick(e, canvasId, panelType) {
+            if (!fdState) return;
+            const { p, N, lim, MASK, E1x, E1y, E2x, E2y, M, Mmax, Mx, My, Mxmax, Mymax } = fdState;
+            const cv = $(canvasId);
+            const rect = cv.getBoundingClientRect();
+            const px = e.clientX - rect.left;
+            const py = e.clientY - rect.top;
+            const W = rect.width;
+            const wx = -lim + px / W * 2 * lim;
+            const wy = lim - py / W * 2 * lim;
+            const gi = fdGridIdx(wx, wy, lim, N);
+            if (gi < 0 || !MASK[gi]) return;
+            const infoEl = $('fd-info-' + panelType);
+            if (panelType === 'A') {
+                const amp = Math.sqrt(E1x[gi] * E1x[gi] + E1y[gi] * E1y[gi]);
+                infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  |E₁|=${amp.toExponential(3)} V/m`;
+                fdShowWaveCarrier(amp, p.f1, 'A', wx, wy);
+            } else if (panelType === 'B') {
+                const amp = Math.sqrt(E2x[gi] * E2x[gi] + E2y[gi] * E2y[gi]);
+                infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  |E₂|=${amp.toExponential(3)} V/m`;
+                fdShowWaveCarrier(amp, p.f2, 'B', wx, wy);
+            } else if (panelType === 'TI') {
+                const mval = Mx[gi];
+                infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  M=${mval.toExponential(3)} V/m`;
+                fdShowWaveEnvelope(mval / 10, p.f1, p.f2, wx, wy);
+            } else {
+                const mval = My[gi];
+                infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  M=${mval.toExponential(3)} V/m`;
+                fdShowWaveEnvelope(mval, p.f1, p.f2, wx, wy);
+            }
+        }
+
+        // ── Init field distribution controls ──
+        (function fdInit() {
+            // Populate electrode selects
+            ['fd-sel-a', 'fd-sel-b', 'fd-sel-c', 'fd-sel-d'].forEach(id => {
+                const sel = $(id);
+                for (let i = 0; i < FD_N_ELEC; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i; opt.textContent = `E${i}`;
+                    sel.appendChild(opt);
+                }
+            });
+            $('fd-sel-a').value = 1;
+            $('fd-sel-b').value = 4;
+            $('fd-sel-c').value = 11;
+            $('fd-sel-d').value = 8;
+
+            // Slider label bindings (only for controls NOT in sharedParams)
+            function fdBind(id, outId, fmt) {
                 const el = $(id);
-                if (!el) return;
-                el.addEventListener('input', () => {
-                    if (id === 'ec-dist') $('ec-dist-val').textContent = el.value + ' mm';
-                    drawCircuit();
-                });
+                el.addEventListener('input', () => { $(outId).textContent = fmt(el.value); });
+            }
+            fdBind('fd-I1', 'fd-sv-I1', v => (+v).toFixed(1));
+            fdBind('fd-I2', 'fd-sv-I2', v => (+v).toFixed(1));
+            fdBind('fd-sigma', 'fd-sv-sigma', v => (+v).toFixed(3));
+            fdBind('fd-hr', 'fd-sv-hr', v => (+v).toFixed(3));
+            fdBind('fd-thresh', 'fd-sv-thresh', v => Math.round(v * 100) + '%');
+
+            // fd-f1, fd-f2: text inputs — sync on change/blur, triggers FFT reset
+            ['fd-f1', 'fd-f2'].forEach(id => {
+                $(id).addEventListener('change', onTab2FreqChange);
+                $(id).addEventListener('blur', onTab2FreqChange);
+            });
+            // fd-I1, fd-I2: range sliders — sync on input (live), NO FFT reset
+            ['fd-I1', 'fd-I2'].forEach(id => {
+                $(id).addEventListener('input', onTab2AmpChange);
+                $(id).addEventListener('change', onTab2AmpChange);
             });
 
-        new ResizeObserver(() => { if ($('tab-circuit').classList.contains('active')) drawCircuit(); }).observe($('cirt-wrap'));
-        drawCircuit();
+            // Run button
+            $('fd-run-btn').addEventListener('click', fdCompute);
+
+            // Canvas click handlers
+            const map = { 'fd-cvA': 'A', 'fd-cvB': 'B', 'fd-cvTI': 'TI', 'fd-cvST': 'ST' };
+            Object.keys(map).forEach(id => {
+                $(id).addEventListener('click', e => fdCanvasClick(e, id, map[id]));
+            });
+
+            // Modal close
+            $('fd-waveClose').addEventListener('click', () => $('fd-waveModal').classList.remove('open'));
+            $('fd-waveModal').addEventListener('click', e => {
+                if (e.target === $('fd-waveModal')) $('fd-waveModal').classList.remove('open');
+            });
+
+            // Resize observer
+            new ResizeObserver(() => {
+                if ($('tab-circuit').classList.contains('active')) { fdDrawAll(); }
+            }).observe($('fd-grid'));
+        })();
     </script>
 </body>
 
