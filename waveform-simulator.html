@@ -4,7 +4,12 @@ permalink: /simulator/
 ---
 
 <!--This document was made by Claude AI. It is based
-on a Python script which was made by Copilot AI.-->
+on a Python script which was made by Copilot AI.
+TODO:
+* The first field distribution figure only shows one plot when you click on it, needs to be updated to overlap both.
+* Need to be able to download snapshot of set parameters
+* Stretch: at download screen, allow user defined ramp duration and stim durations and show plots of entire waveforms.
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -22,7 +27,7 @@ on a Python script which was made by Copilot AI.-->
             --border: #2a2f3f;
             --border2: #3a4055;
             --text: #c8cfe0;
-            --dim: #606880;
+            --dim: #ffffff;
             --head: #e8eaf0;
             --accent: #4fc3f7;
             --accent2: #7c83ff;
@@ -579,6 +584,21 @@ on a Python script which was made by Copilot AI.-->
             height: 100%
         }
 
+        .finput,
+        select.finput {
+            background: var(--surface);
+            color: var(--head);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+        }
+
+        select.finput option {
+            background: var(--surface);
+            color: var(--head);
+        }
+
         /* ── Diagram SVG element styles ── */
         .diag-head-circle {
             fill: none;
@@ -808,37 +828,22 @@ on a Python script which was made by Copilot AI.-->
             top: 0;
         }
 
-        #fd-run-btn {
-            width: 100%;
-            padding: 7px;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--bg);
-            background: var(--accent);
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            letter-spacing: .06em;
-            text-transform: uppercase;
-            transition: opacity .12s;
-        }
-
-        #fd-run-btn:hover {
-            opacity: .85;
-        }
 
         #fd-right {
             flex: 1;
             display: flex;
             flex-direction: column;
             min-width: 0;
+            overflow-x: auto;
         }
 
         #fd-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: row;
             gap: 10px;
+            min-width: max-content;
+            padding-bottom: 4px;
+            height: 100%;
         }
 
         .fd-panel-wrap {
@@ -848,6 +853,8 @@ on a Python script which was made by Copilot AI.-->
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            width: 340px;
+            flex-shrink: 0;
         }
 
         .fd-canvas-wrap {
@@ -965,10 +972,6 @@ on a Python script which was made by Copilot AI.-->
                 width: 100%;
                 max-height: 40vh;
             }
-
-            #fd-grid {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
@@ -1004,45 +1007,65 @@ on a Python script which was made by Copilot AI.-->
                         </div>
                     </div>
 
-                    <div class="card" id="fsk-card" style="display:none">
-                        <div class="card-title">FSK Parameters</div>
+                    <div class="card" id="fsk-card" style="display:none; border-color:#fff52f">
+                        <div class="card-title" style="color:#fff52f;border-color:rgba(254, 174, 0, 0.25)">FSK
+                            Parameters
+                        </div>
                         <div class="frow"><span class="flabel">PRF (Hz)</span><input class="finput" id="prf" value="10">
                         </div>
-                        <div class="frow"><span class="flabel">Pulse Width (ms)</span><input class="finput" id="pw"
+                        <div class="frow"><span class="flabel">Pulse Duration (ms)</span><input class="finput" id="pw"
                                 value="10"></div>
+                        <div class="frow" id="fsk-npulses-row">
+                            <span class="flabel">Number of Pulses</span>
+                            <span id="fsk-npulses"
+                                style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);width:70px;text-align:right;display:inline-block">—</span>
+                        </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card-title">Signal Parameters</div>
+                    <div class="card" style="border-color:#ff6b6b">
+                        <div class="card-title" style="color:#ff6b6b;border-color:rgba(255,107,107,0.25)">I1 Parameters
+                        </div>
                         <div class="frow"><span class="flabel">Frequency 1 (Hz)</span><input class="finput" id="f1"
                                 value="2000"></div>
-                        <div class="frow"><span class="flabel">Frequency 2 (Hz)</span><input class="finput" id="f2"
-                                value="2010"></div>
                         <div class="frow"><span class="flabel">Phase 1 (°)</span><input class="finput" id="ph1"
                                 value="0"></div>
-                        <div class="frow"><span class="flabel">Phase 2 (°)</span><input class="finput" id="ph2"
-                                value="180"></div>
                         <div class="srow">
                             <div class="shdr"><span class="sname">Amplitude I1 (mA)</span><span class="sval"
                                     id="sv-a1">1.0</span></div>
                             <input type="range" id="a1" min="0.1" max="5" step="0.1" value="1.0">
                         </div>
+                        <div class="frow"><span class="flabel" style="color:#ff6b6b">Active Electrode</span>
+                            <select class="finput" id="i1-active" style="width:80px;text-align:left"></select>
+                        </div>
+                        <div class="frow"><span class="flabel" style="color:#ff6b6b;opacity:0.7">Return Electrode</span>
+                            <select class="finput" id="i1-return" style="width:80px;text-align:left"></select>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-color:#4fc3f7">
+                        <div class="card-title" style="color:#4fc3f7;border-color:rgba(79,195,247,0.25)">I2 Parameters
+                        </div>
+                        <div class="frow"><span class="flabel" id="f2-label">Frequency 2 (Hz)</span><input
+                                class="finput" id="f2" value="2010"></div>
+                        <div class="frow" id="fsk-f2in-row" style="display:none"><span class="flabel"
+                                style="color:#fff52f">Freq 2 inside
+                                pulse (Hz)</span><input class="finput" id="f2in" value="2100"></div>
+                        <div class="frow"><span class="flabel">Phase 2 (°)</span><input class="finput" id="ph2"
+                                value="180"></div>
                         <div class="srow">
                             <div class="shdr"><span class="sname">Amplitude I2 (mA)</span><span class="sval"
                                     id="sv-a2">1.0</span></div>
                             <input type="range" id="a2" min="0.1" max="5" step="0.1" value="1.0">
                         </div>
-                        <div class="frow"><span class="flabel">Nonlinearity (%)</span><input class="finput" id="nl"
-                                value="0.0"></div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-title">FFT Status</div>
-                        <div style="font-size:11px;color:var(--dim);line-height:1.6">
-                            Recomputed once 1 s of clean data is collected after any parameter change.
+                        <div class="frow"><span class="flabel" style="color:#4fc3f7">Active Electrode</span>
+                            <select class="finput" id="i2-active" style="width:80px;text-align:left"></select>
                         </div>
-                        <div id="fft-status" class="fft-status">Collecting data…</div>
+                        <div class="frow"><span class="flabel" style="color:#4fc3f7;opacity:0.7">Return Electrode</span>
+                            <select class="finput" id="i2-return" style="width:80px;text-align:left"></select>
+                        </div>
                     </div>
+                    <!-- Nonlinearity input removed from UI; nl is fixed at 0 below -->
+                    <input type="hidden" id="nl" value="0.0">
 
                     <div class="card">
                         <div class="card-title">Playback</div>
@@ -1055,7 +1078,13 @@ on a Python script which was made by Copilot AI.-->
                         <button id="pp-btn">⏸ Pause</button>
                     </div>
 
-
+                    <div class="card">
+                        <div class="card-title">FFT Status</div>
+                        <div style="font-size:11px;color:var(--dim);line-height:1.6">
+                            Recomputed once 1 s of clean data is collected after any parameter change.
+                        </div>
+                        <div id="fft-status" class="fft-status">Collecting data…</div>
+                    </div>
 
 
                     <div class="card">
@@ -1143,8 +1172,10 @@ on a Python script which was made by Copilot AI.-->
                                         </div>
                                     </foreignObject>
 
-                                    <!-- ─── Head circle (stimulation load) ─── -->
-                                    <circle cx="280" cy="170" r="100" class="diag-head-circle" />
+                                    <!-- ─── 10-10 Montage PNG (replaces plain head circle) ─── -->
+                                    <!-- MANUAL OVERRIDE: adjust x, y, width, height below to reposition/resize the PNG -->
+                                    <image id="diag-head-png" href="/pics/10-10-montage.png" x="148" y="58" width="264"
+                                        height="235" preserveAspectRatio="xMidYMid meet" />
 
                                     <!-- ─── Generator labels at top ─── -->
                                     <text x="80" y="22" class="diag-label-bold" text-anchor="middle" fill="#ff6b6b">I1 ·
@@ -1158,71 +1189,65 @@ on a Python script which was made by Copilot AI.-->
                                 ═══════════════════════════════════════════ -->
                                     <!-- Generator circle -->
                                     <circle cx="80" cy="170" r="36" class="diag-gen-circle" stroke="#ff6b6b" />
-                                    <!-- Sine wave inside generator: one clean cycle (crest then trough), red -->
+                                    <!-- Sine wave inside generator -->
                                     <path d="M 60 170 C 66 156, 72 156, 78 170 C 84 184, 90 184, 96 170"
                                         class="diag-gen-sine" stroke="#ff6b6b" />
 
-                                    <!-- Anode lead: generator → 225° electrode (top-left, ≈209, 99) -->
-                                    <polyline points="116,170 160,170 160,99 209,99" class="diag-lead" stroke="#ff6b6b"
-                                        stroke-dasharray="none" />
-                                    <!-- Cathode lead: generator → 135° electrode (bottom-left, ≈209, 241) -->
-                                    <polyline points="116,170 160,170 160,241 209,241" class="diag-lead"
-                                        stroke="#ff6b6b" stroke-dasharray="5,3" />
+                                    <!-- Dynamic leads for I1 (updated by JS) -->
+                                    <polyline id="diag-i1-active-lead" class="diag-lead" stroke="#ff6b6b"
+                                        stroke-dasharray="none" points="116,170 160,170 160,130 209,130" />
+                                    <polyline id="diag-i1-return-lead" class="diag-lead" stroke="#ff6b6b"
+                                        stroke-dasharray="5,3" points="116,170 160,170 160,210 209,210" />
 
-                                    <!-- Anode electrode dot at 225° (top-left) -->
-                                    <circle cx="209" cy="99" r="6" class="diag-elec" fill="#ff6b6b" stroke="#0d0f14" />
-                                    <!-- Cathode electrode dot at 135° (bottom-left) -->
-                                    <circle cx="209" cy="241" r="6" class="diag-elec" fill="#ff6b6b" stroke="#0d0f14"
-                                        opacity="0.55" />
+                                    <!-- Dynamic electrode dots for I1 -->
+                                    <circle id="diag-i1-active-dot" r="6" class="diag-elec" fill="#ff6b6b"
+                                        stroke="#0d0f14" cx="209" cy="130" />
+                                    <circle id="diag-i1-return-dot" r="6" class="diag-elec" fill="#ff6b6b"
+                                        stroke="#0d0f14" opacity="0.55" cx="209" cy="210" />
 
-                                    <!-- Labels -->
-                                    <text x="190" y="88" class="diag-label" text-anchor="middle"
-                                        fill="#ff6b6b">ANODE+</text>
-                                    <text x="190" y="259" class="diag-label" text-anchor="middle" fill="#ff6b6b"
-                                        opacity="0.7">CATHODE−</text>
+                                    <!-- Dynamic labels for I1 -->
+                                    <text id="diag-i1-active-lbl" class="diag-label" text-anchor="middle" fill="#ff6b6b"
+                                        x="190" y="119">ACTIVE</text>
+                                    <text id="diag-i1-return-lbl" class="diag-label" text-anchor="middle" fill="#ff6b6b"
+                                        opacity="0.7" x="190" y="225">RETURN</text>
 
                                     <!-- ══════════════════════════════════════════
                                      RIGHT generator (blue / wave 2)
                                 ═══════════════════════════════════════════ -->
                                     <!-- Generator circle -->
                                     <circle cx="480" cy="170" r="36" class="diag-gen-circle" stroke="#4fc3f7" />
-                                    <!-- Sine wave inside generator: one clean cycle (crest then trough), blue -->
+                                    <!-- Sine wave inside generator -->
                                     <path d="M 460 170 C 466 156, 472 156, 478 170 C 484 184, 490 184, 496 170"
                                         class="diag-gen-sine" stroke="#4fc3f7" />
 
-                                    <!-- Anode lead: right generator → 45° electrode (≈351, 99) -->
-                                    <polyline points="444,170 400,170 400,99 351,99" class="diag-lead"
-                                        stroke="#4fc3f7" />
-                                    <!-- Cathode lead: right generator → −45° electrode (≈351, 241) -->
-                                    <polyline points="444,170 400,170 400,241 351,241" class="diag-lead"
-                                        stroke="#4fc3f7" stroke-dasharray="5,3" />
+                                    <!-- Dynamic leads for I2 (updated by JS) -->
+                                    <polyline id="diag-i2-active-lead" class="diag-lead" stroke="#4fc3f7"
+                                        stroke-dasharray="none" points="444,170 400,170 400,130 351,130" />
+                                    <polyline id="diag-i2-return-lead" class="diag-lead" stroke="#4fc3f7"
+                                        stroke-dasharray="5,3" points="444,170 400,170 400,210 351,210" />
 
-                                    <!-- Anode electrode dot at 45° -->
-                                    <circle cx="351" cy="99" r="6" class="diag-elec" fill="#4fc3f7" stroke="#0d0f14" />
-                                    <!-- Cathode electrode dot at −45° -->
-                                    <circle cx="351" cy="241" r="6" class="diag-elec" fill="#4fc3f7" stroke="#0d0f14"
-                                        opacity="0.55" />
+                                    <!-- Dynamic electrode dots for I2 -->
+                                    <circle id="diag-i2-active-dot" r="6" class="diag-elec" fill="#4fc3f7"
+                                        stroke="#0d0f14" cx="351" cy="130" />
+                                    <circle id="diag-i2-return-dot" r="6" class="diag-elec" fill="#4fc3f7"
+                                        stroke="#0d0f14" opacity="0.55" cx="351" cy="210" />
 
-                                    <!-- Labels -->
-                                    <text x="370" y="88" class="diag-label" text-anchor="middle"
-                                        fill="#4fc3f7">ANODE+</text>
-                                    <text x="370" y="259" class="diag-label" text-anchor="middle" fill="#4fc3f7"
-                                        opacity="0.7">CATHODE−</text>
+                                    <!-- Dynamic labels for I2 -->
+                                    <text id="diag-i2-active-lbl" class="diag-label" text-anchor="middle" fill="#4fc3f7"
+                                        x="370" y="119">ACTIVE</text>
+                                    <text id="diag-i2-return-lbl" class="diag-label" text-anchor="middle" fill="#4fc3f7"
+                                        opacity="0.7" x="370" y="225">RETURN</text>
 
-                                    <!-- ─── Head label ─── -->
-                                    <text x="280" y="175" class="diag-label" text-anchor="middle"
-                                        fill="#606880">STIMULATION</text>
-                                    <text x="280" y="189" class="diag-label" text-anchor="middle" fill="#606880">LOAD
-                                        (HEAD)</text>
-
-                                    <!-- ─── Interference zone hint (subtle cross mark) ─── -->
-                                    <circle cx="280" cy="170" r="14" fill="#cc5de8" opacity="0.12" />
-                                    <circle cx="280" cy="170" r="4" fill="#cc5de8" opacity="0.35" />
+                                    <!-- ─── Interference zone hint ─── -->
+                                    <!-- <circle cx="280" cy="155" r="14" fill="#cc5de8" opacity="0.12" />
+                                    <circle cx="280" cy="155" r="4" fill="#cc5de8" opacity="0.35" /> -->
 
                                     <!-- ─── Bottom note ─── -->
                                     <text x="280" y="320" class="diag-label" text-anchor="middle" fill="#3a4055"
                                         font-size="8">
-                                        Solid line = anode lead · Dashed line = cathode lead
+                                        Solid = active lead · Dashed = return lead · (<a
+                                            href="https://doi.org/10.1007/978-3-642-38256-7_18" target="_blank">figure
+                                            source</a>)
                                     </text>
                                 </svg>
                             </div>
@@ -1300,8 +1325,9 @@ on a Python script which was made by Copilot AI.-->
             <div id="fd-panel">
                 <div id="fd-controls">
 
-                    <div class="card">
-                        <div class="card-title">Pair A — Electrodes</div>
+                    <div class="card" style="border-color:#ff6b6b">
+                        <div class="card-title" style="color:#ff6b6b;border-color:rgba(255,107,107,0.25)">Pair A —
+                            Electrodes</div>
                         <div class="frow"><span class="flabel">A (+)</span>
                             <select class="finput" id="fd-sel-a" style="width:70px;text-align:left"></select>
                         </div>
@@ -1319,8 +1345,9 @@ on a Python script which was made by Copilot AI.-->
                         </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card-title">Pair B — Electrodes</div>
+                    <div class="card" style="border-color:#4fc3f7">
+                        <div class="card-title" style="color:#4fc3f7;border-color:rgba(79,195,247,0.25)">Pair B —
+                            Electrodes</div>
                         <div class="frow"><span class="flabel">B (+)</span>
                             <select class="finput" id="fd-sel-c" style="width:70px;text-align:left"></select>
                         </div>
@@ -1357,8 +1384,6 @@ on a Python script which was made by Copilot AI.-->
                         </div>
                     </div>
 
-                    <button id="fd-run-btn">▶ Recompute</button>
-
                     <div class="card" style="margin-top:0">
                         <div
                             style="font-size:10px;color:var(--dim);line-height:1.6;font-family:'IBM Plex Mono',monospace">
@@ -1371,25 +1396,17 @@ on a Python script which was made by Copilot AI.-->
                 <div id="fd-right">
                     <div id="fd-grid">
                         <div class="fd-panel-wrap">
-                            <div class="plot-hdr" id="fd-lbl-A">Pair A · |E₁| — carrier field</div>
-                            <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvA"></canvas></div>
-                            <div class="fd-info-bar" id="fd-info-A">Click inside head to inspect</div>
+                            <div class="plot-hdr" id="fd-lbl-AB">Pair A &amp; B · Combined carrier fields</div>
+                            <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvAB"></canvas></div>
+                            <div class="fd-info-bar" id="fd-info-AB">Click inside head to inspect</div>
                             <div class="fd-legend">
-                                <span class="leg-item"><span class="leg-dot" style="background:#4488ff"></span>Pair A
+                                <span class="leg-item"><span class="leg-dot" style="background:#ff4444"></span>Pair A
                                     (+)</span>
-                                <span class="leg-item"><span class="leg-dot" style="background:#ff6644"></span>Pair A
+                                <span class="leg-item"><span class="leg-dot" style="background:#ff8866"></span>Pair A
                                     (−)</span>
-                                <span class="leg-item"><span class="leg-dot" style="background:#888"></span>Other</span>
-                            </div>
-                        </div>
-                        <div class="fd-panel-wrap">
-                            <div class="plot-hdr" id="fd-lbl-B">Pair B · |E₂| — carrier field</div>
-                            <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvB"></canvas></div>
-                            <div class="fd-info-bar" id="fd-info-B">Click inside head to inspect</div>
-                            <div class="fd-legend">
-                                <span class="leg-item"><span class="leg-dot" style="background:#ff5533"></span>Pair B
-                                    (+)</span>
                                 <span class="leg-item"><span class="leg-dot" style="background:#4488ff"></span>Pair B
+                                    (+)</span>
+                                <span class="leg-item"><span class="leg-dot" style="background:#66aaff"></span>Pair B
                                     (−)</span>
                                 <span class="leg-item"><span class="leg-dot" style="background:#888"></span>Other</span>
                             </div>
@@ -1397,12 +1414,17 @@ on a Python script which was made by Copilot AI.-->
                         <div class="fd-panel-wrap">
                             <div class="plot-hdr" id="fd-lbl-TI">TI envelope · X component</div>
                             <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvTI"></canvas></div>
-                            <div class="fd-info-bar" id="fd-info-TI">Click inside head to inspect</div>
+                            <div class="fd-info-bar" id="fd-info-TI">Overlay = M ≥ threshold</div>
                         </div>
                         <div class="fd-panel-wrap">
                             <div class="plot-hdr" id="fd-lbl-ST">Stimulated region · Y component</div>
                             <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvST"></canvas></div>
-                            <div class="fd-info-bar" id="fd-info-ST">Green overlay = M ≥ threshold</div>
+                            <div class="fd-info-bar" id="fd-info-ST">Overlay = M ≥ threshold</div>
+                        </div>
+                        <div class="fd-panel-wrap">
+                            <div class="plot-hdr" id="fd-lbl-MMTI">Stimulated region · MAX TI</div>
+                            <div class="fd-canvas-wrap"><canvas class="fd-canvas" id="fd-cvMMTI"></canvas></div>
+                            <div class="fd-info-bar" id="fd-info-MMTI">Overlay = M ≥ threshold</div>
                         </div>
                     </div>
                 </div><!-- /fd-right -->
@@ -1440,11 +1462,12 @@ on a Python script which was made by Copilot AI.-->
         const PI2 = Math.PI * 2;
 
         /* ── Shared signal parameters (single source of truth) ── */
-        const sharedParams = { f1: 2000, f2: 2010, a1: 1.0, a2: 1.0 };
+        const sharedParams = { f1: 2000, f2: 2010, f2in: 2100, a1: 1.0, a2: 1.0 };
 
         function syncAllUI() {
             $('f1').value = sharedParams.f1;
             $('f2').value = sharedParams.f2;
+            $('f2in').value = sharedParams.f2in;
             $('a1').value = sharedParams.a1;
             $('sv-a1').textContent = sharedParams.a1.toFixed(1);
             $('a2').value = sharedParams.a2;
@@ -1824,6 +1847,114 @@ on a Python script which was made by Copilot AI.-->
         }
 
         /* ════════════════════════════════════════════════════════
+           FFT PEAK MARKER OVERLAY
+           Draws x,y marker(s) at specified frequency bins on the
+           FFT canvas, after drawPlot has already rendered the plot.
+           markers: array of { freq, amp, color, label }
+        ════════════════════════════════════════════════════════ */
+        function drawFftMarkers(cv, markers, xRange, yRange, logX, logY, yMaxHint) {
+            const cell = cv.parentElement;
+            const W = cell.clientWidth, H = cell.clientHeight;
+            if (W < 20 || H < 20) return;
+            const ctx = cv.getContext('2d');
+
+            const P = { l: 44, r: 10, t: 8, b: 28 };
+            const PW = W - P.l - P.r, PH = H - P.t - P.b;
+            if (PW < 10 || PH < 10) return;
+
+            const [xMin, xMax] = xRange;
+            const lMin = logX ? Math.log10(Math.max(xMin, 1e-9)) : 0;
+            const lMax = logX ? Math.log10(xMax) : 0;
+            const toX = logX
+                ? v => P.l + (Math.log10(Math.max(v, 1e-9)) - lMin) / (lMax - lMin) * PW
+                : v => P.l + (v - xMin) / (xMax - xMin) * PW;
+
+            // Reconstruct yMin/yMax to match drawPlot logic
+            let yMin = yRange ? yRange[0] : 0;
+            let yMax = yRange ? yRange[1] : (yMaxHint || 1);
+            if (logY) {
+                yMin = Math.max(yMin, yMax * 1e-4);
+                yMax = yMax * 2;
+            }
+            const lyMin = logY ? Math.log10(Math.max(yMin, 1e-12)) : 0;
+            const lyMax = logY ? Math.log10(Math.max(yMax, 1e-12)) : 0;
+            const toY = logY
+                ? v => P.t + PH - (Math.log10(Math.max(v, 1e-12)) - lyMin) / (lyMax - lyMin) * PH
+                : v => P.t + PH - (v - yMin) / (yMax - yMin) * PH;
+
+            // Clip to plot area
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(P.l, P.t, PW, PH);
+            ctx.clip();
+
+            for (const m of markers) {
+                if (m.freq < xMin || m.freq > xMax) continue;
+                if (m.amp <= 0) continue;
+                const px = toX(m.freq);
+                const py = toY(m.amp);
+                if (py < P.t || py > P.t + PH) continue;
+
+                // Dot
+                ctx.beginPath();
+                ctx.arc(px, py, 4, 0, Math.PI * 2);
+                ctx.fillStyle = m.color;
+                ctx.fill();
+                ctx.strokeStyle = '#0d0f14';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Crosshair tick lines (subtle)
+                ctx.setLineDash([3, 3]);
+                ctx.strokeStyle = m.color;
+                ctx.globalAlpha = 0.4;
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, P.t + PH); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(P.l, py); ctx.lineTo(px, py); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
+
+                // Label box: "f=XXXHz\ny=X.XXmA"
+                const freqStr = m.freq >= 1000 ? (m.freq / 1000).toFixed(3) + 'k' : m.freq.toFixed(0);
+                const ampStr = m.amp < 0.001 ? m.amp.toExponential(2) : m.amp.toFixed(3);
+                const line1 = freqStr + 'Hz';
+                const line2 = ampStr + (m.unit || '');
+
+                ctx.font = 'bold 9px "IBM Plex Mono",monospace';
+                const tw = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width);
+                const boxW = tw + 8, boxH = 26;
+
+                // Position label: use explicit side if given ('left'/'right'), else auto
+                const goLeft = m.side === 'left';
+                let bx = goLeft ? px - boxW - 6 : px + 6;
+                let by = py - boxH - 6;
+                if (by < P.t) by = py + 6;
+
+                // Background
+                ctx.fillStyle = 'rgba(13,15,20,0.85)';
+                ctx.beginPath();
+                ctx.roundRect(bx - 1, by - 1, boxW + 2, boxH + 2, 3);
+                ctx.fill();
+
+                // Border
+                ctx.strokeStyle = m.color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(bx - 1, by - 1, boxW + 2, boxH + 2, 3);
+                ctx.stroke();
+
+                // Text
+                ctx.fillStyle = '#e8eaf0';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(line1, bx + 3, by + 3);
+                ctx.fillStyle = m.color;
+                ctx.fillText(line2, bx + 3, by + 14);
+            }
+            ctx.restore();
+        }
+
+        /* ════════════════════════════════════════════════════════
            SIMULATOR STATE
         ════════════════════════════════════════════════════════ */
         let buf1 = new Float32Array(BUFLEN);
@@ -1840,9 +1971,12 @@ on a Python script which was made by Copilot AI.-->
         // instead of f1v, creating a phase deviation of PI2*(f2v-f1v)/FS per sample.
         // We accumulate only this deviation — so outside pulses it never changes,
         // and the closed-form base keeps wave 2 perfectly locked to f1v with no drift.
-        let fskPhiDev = 0;
+        let ph2accumulator = 0;
         // Sample-domain pulse position counter (avoids fractional-sample pulse width errors)
         let fskSamplePos = 0;
+        // Phase difference (phi1 - phi2) captured at the moment each pulse starts.
+        // Used at pulse end to compute and enforce the exact expected phase difference.
+        let ph2ResetAccumulator = 0;
         // dispHead tracks which sample index is the "current" display position.
         // It advances by exactly the number of new samples generated each frame,
         // so the display scrolls at the same rate new data is produced — which is
@@ -1871,8 +2005,9 @@ on a Python script which was made by Copilot AI.-->
             paramsDirty = true; fftReady = false; fftJustUpdated = false; samplesUntilFFT = FFTLEN;
             buf1.fill(0); buf2.fill(0); bufSum.fill(0); bufEnv.fill(0);
             bufIdx = 0; simTime = 0; smpAccum = 0; dispHead = 0; dispHeadAccum = 0; dispHeadFrac = 0; totalWritten = 0;
-            fskPhiDev = 0;
+            ph2accumulator = 0;
             fskSamplePos = 0;
+            ph2ResetAccumulator = 0;
             // Reset time speed to default so display is never blank at low speeds
             $('sl-speed').value = 21;
             $('sv-speed').textContent = '21%';
@@ -2018,7 +2153,7 @@ on a Python script which was made by Copilot AI.-->
                         ys: new Float32Array(nNew), ye: new Float32Array(nNew)
                     };
                 const { y1, y2, ys, ye } = _tmp;
-                const f1v = fv('f1', 2000), f2v = fv('f2', 2010);
+                const f1v = fv('f1', 2000), f2v = fv('f2', 2010), f2inv = fv('f2in', 2100);
                 const a1v = fv('a1', 1), a2v = fv('a2', 1), nlv = fv('nl', 0);
                 const ph1v = fv('ph1', 0) * Math.PI / 180, ph2v = fv('ph2', 90) * Math.PI / 180;
                 const prfv = fv('prf', 10), pwv = fv('pw', 10) / 1000;
@@ -2027,6 +2162,7 @@ on a Python script which was made by Copilot AI.-->
                 // fractional-sample error and no pulse-to-pulse phase accumulation.
                 const fskPeriodSamples = Math.round(FS / prfv);
                 const fskPulseSamples = Math.min(Math.round(pwv * FS), fskPeriodSamples);
+                const fskPulseDurError = (fskPulseSamples - (pwv * FS)) / FS;
 
                 for (let i = 0; i < nNew; i++) {
                     const t = simTime + (i + 1) / FS;
@@ -2035,24 +2171,33 @@ on a Python script which was made by Copilot AI.-->
                     const phi1 = PI2 * f1v * t + ph1v;
                     const c1r = a1v * Math.cos(phi1), c1i = a1v * Math.sin(phi1);
 
-                    // Wave 2 phase: closed-form base (no float drift) + FSK deviation.
-                    // Base = PI2*f1v*t + ph2v — identical structure to wave 1, perfectly stable.
-                    // During FSK pulses, accumulate the per-sample frequency deviation (f2v-f1v).
-                    // Outside pulses fskPhiDev is frozen, so wave 2 stays locked to f1v exactly.
+                    // Wave 2 phase in FSK mode:
+                    //   • Outside pulse: accumulate deviation for (f2v  - f1v) per sample
+                    //   • Inside  pulse: accumulate deviation for (f2inv - f1v) per sample
                     if (tiMode === 'fsk') {
-                        if (fskSamplePos < fskPulseSamples) {
-                            fskPhiDev += PI2 * (f2v - f1v) / FS;
+                        const wasInPulse = fskSamplePos < fskPulseSamples;
+
+                        // Snapshot phase difference at the very first sample of the pulse
+                        if (fskSamplePos === 0) {
+                            // Not sure what to do with this code right now.
                         }
+
+                        // Accumulate per-sample deviation
+                        ph2accumulator += PI2 * ((wasInPulse ? f2inv : f2v)) / FS;
+
                         fskSamplePos++;
-                        if (fskSamplePos >= fskPeriodSamples) {
-                            fskSamplePos = 0;
-                            // Snap accumulated phase deviation to nearest 2π multiple
-                            // so wave 2 returns to exact phase lock with wave 1 each period.
-                            fskPhiDev = Math.round(fskPhiDev / PI2) * PI2;
+                        if (fskSamplePos >= fskPeriodSamples) fskSamplePos = 0;
+
+                        // Detect pulse end: just stepped past the last pulse sample
+                        const justEndedPulse = wasInPulse && (fskSamplePos >= fskPulseSamples || fskSamplePos === 0);
+                        if (justEndedPulse) {
+                            // Force phase of I2 to undo any drift accumulation
+                            const phi1now = PI2 * f1v * t + ph1v;
+                            ph2ResetAccumulator += Math.PI / 2 * (1 - Math.cos(PI2 * Math.abs(f2inv - f2v) * pwv));
+                            ph2accumulator = phi1now + ph2ResetAccumulator;
                         }
                     }
-                    const phi2base = PI2 * f1v * t + ph2v;
-                    const phi2 = tiMode === 'fsk' ? phi2base + fskPhiDev
+                    const phi2 = tiMode === 'fsk' ? ph2accumulator + ph2v
                         : PI2 * f2v * t + ph2v;
                     const c2r = a2v * Math.cos(phi2), c2i = a2v * Math.sin(phi2);
 
@@ -2269,6 +2414,100 @@ on a Python script which was made by Copilot AI.-->
                 drawPlot($('cv-fs'),
                     [{ data: fnS, color: '#69db7c', xdata: freqFull }],
                     [fsLo, fsHi], [0, fftYtop], true, 'Frequency (Hz)', 'mA', true);
+
+                // ── FFT peak markers ──
+                // Helper: find amplitude at the FFT bin closest to targetHz
+                function fftAmpAt(data, targetHz) {
+                    // freqFull[i] = exact Hz for that bin; find nearest
+                    let bestIdx = 0, bestDist = Infinity;
+                    for (let i = 0; i < freqFull.length; i++) {
+                        const d = Math.abs(freqFull[i] - targetHz);
+                        if (d < bestDist) { bestDist = d; bestIdx = i; }
+                        if (freqFull[i] > targetHz + 5) break; // bins are ordered, stop early
+                    }
+                    return data[bestIdx] || 0;
+                }
+
+                //const f1v = fv('f1', 2000), f2v = fv('f2', 2010);
+                const f1v = fv('f1', 2000), f2v = fv('f2', 2010), f2inv = fv('f2in', 2100);
+
+                if (probeMode === 'voltage') {
+                    // Voltage mode: all three FFT plots get markers for both f1 AND f2
+                    const amp1_at_f1 = fftAmpAt(fft1_disp, f1v);
+                    const amp1_at_f2 = fftAmpAt(fft1_disp, f2v);
+                    const amp1_at_f2in = fftAmpAt(fft1_disp, f2inv);
+                    const amp2_at_f1 = fftAmpAt(fft2_disp, f1v);
+                    const amp2_at_f2 = fftAmpAt(fft2_disp, f2v);
+                    const amp2_at_f2in = fftAmpAt(fft2_disp, f2inv);
+                    const ampS_at_f1 = fftAmpAt(fnS, f1v);
+                    const ampS_at_f2 = fftAmpAt(fnS, f2v);
+                    const ampS_at_f2in = fftAmpAt(fnS, f2inv);
+
+                    if (tiMode === 'fsk') {
+                        drawFftMarkers($('cv-fw-i1'),
+                            [{ freq: f1v, amp: amp1_at_f1, color: '#ff6b6b', unit: wingFftYLabel, side: 'left' },
+                            { freq: f2inv, amp: amp1_at_f2in, color: '#ffa040', unit: wingFftYLabel, side: 'right' }],
+                            [fwLo, fwHi], [0, wingFftYtop], true, true, wingFftYtop);
+
+                        drawFftMarkers($('cv-fw-i2'),
+                            [{ freq: f1v, amp: amp2_at_f1, color: '#4fc3f7', unit: wingFftYLabel, side: 'left' },
+                            { freq: f2inv, amp: amp2_at_f2in, color: '#7c83ff', unit: wingFftYLabel, side: 'right' }],
+                            [fwLo, fwHi], [0, wingFftYtop], true, true, wingFftYtop);
+
+                        drawFftMarkers($('cv-fs'),
+                            [{ freq: f1v, amp: ampS_at_f1, color: '#69db7c', unit: 'mA', side: 'left' },
+                            { freq: f2inv, amp: ampS_at_f2in, color: '#69db7c', unit: 'mA', side: 'right' }],
+                            [fsLo, fsHi], [0, fftYtop], true, true, fftYtop);
+                    } else {
+                        drawFftMarkers($('cv-fw-i1'),
+                            [{ freq: f1v, amp: amp1_at_f1, color: '#ff6b6b', unit: wingFftYLabel, side: 'left' },
+                            { freq: f2v, amp: amp1_at_f2, color: '#ffa040', unit: wingFftYLabel, side: 'right' }],
+                            [fwLo, fwHi], [0, wingFftYtop], true, true, wingFftYtop);
+
+                        drawFftMarkers($('cv-fw-i2'),
+                            [{ freq: f1v, amp: amp2_at_f1, color: '#4fc3f7', unit: wingFftYLabel, side: 'left' },
+                            { freq: f2v, amp: amp2_at_f2, color: '#7c83ff', unit: wingFftYLabel, side: 'right' }],
+                            [fwLo, fwHi], [0, wingFftYtop], true, true, wingFftYtop);
+
+                        drawFftMarkers($('cv-fs'),
+                            [{ freq: f1v, amp: ampS_at_f1, color: '#69db7c', unit: 'mA', side: 'left' },
+                            { freq: f2v, amp: ampS_at_f2, color: '#69db7c', unit: 'mA', side: 'right' }],
+                            [fsLo, fsHi], [0, fftYtop], true, true, fftYtop);
+                    }
+                } else {
+                    // Current mode: I1 FFT gets f1 marker, I2 FFT gets f2 marker,
+                    // Sum FFT gets both f1 and f2 markers
+                    const amp1_at_f1 = fftAmpAt(fft1_disp, f1v);
+                    const amp2_at_f2 = fftAmpAt(fft2_disp, f2v);
+                    const amp2_at_f2in = fftAmpAt(fft2_disp, f2inv);
+                    const ampS_at_f1 = fftAmpAt(fnS, f1v);
+                    const ampS_at_f2 = fftAmpAt(fnS, f2v);
+                    const ampS_at_f2in = fftAmpAt(fnS, f2inv);
+
+                    drawFftMarkers($('cv-fw-i1'),
+                        [{ freq: f1v, amp: amp1_at_f1, color: '#ff6b6b', unit: 'mA', side: 'right' }],
+                        [fwLo, fwHi], [0, wingFftYtop], true, true, wingFftYtop);
+
+                    if (tiMode === 'fsk') {
+                        drawFftMarkers($('cv-fw-i2'),
+                            [{ freq: f2inv, amp: amp2_at_f2in, color: '#4fc3f7', unit: 'mA', side: 'right' }],
+                            [fwLo, fwHi], [0, wingFftYtop], true, true, wingFftYtop);
+
+                        drawFftMarkers($('cv-fs'),
+                            [{ freq: f1v, amp: ampS_at_f1, color: '#69db7c', unit: 'mA', side: 'left' },
+                            { freq: f2inv, amp: ampS_at_f2in, color: '#69db7c', unit: 'mA', side: 'right' }],
+                            [fsLo, fsHi], [0, fftYtop], true, true, fftYtop);
+                    } else {
+                        drawFftMarkers($('cv-fw-i2'),
+                            [{ freq: f2v, amp: amp2_at_f2, color: '#4fc3f7', unit: 'mA', side: 'right' }],
+                            [fwLo, fwHi], [0, wingFftYtop], true, true, wingFftYtop);
+
+                        drawFftMarkers($('cv-fs'),
+                            [{ freq: f1v, amp: ampS_at_f1, color: '#69db7c', unit: 'mA', side: 'left' },
+                            { freq: f2v, amp: ampS_at_f2, color: '#69db7c', unit: 'mA', side: 'right' }],
+                            [fsLo, fsHi], [0, fftYtop], true, true, fftYtop);
+                    }
+                }
             }
         }
         requestAnimationFrame(tiFrame);
@@ -2292,6 +2531,7 @@ on a Python script which was made by Copilot AI.-->
                 syncAllUI();
                 markParamsDirty();
                 updateWindowRanges();
+                updateFskNPulses();
             }, 400);
             $(id).addEventListener('input', handler);
             $(id).addEventListener('keydown', e => {
@@ -2302,6 +2542,7 @@ on a Python script which was made by Copilot AI.-->
                     syncAllUI();
                     markParamsDirty();
                     updateWindowRanges();
+                    updateFskNPulses();
                 }
             });
         });
@@ -2322,18 +2563,43 @@ on a Python script which was made by Copilot AI.-->
             });
         });
         // Other (non-shared) params — unchanged behaviour
-        ['ph1', 'ph2', 'nl', 'prf', 'pw'].forEach(id => {
-            const handler = debounce(() => { markParamsDirty(); updateWindowRanges(); }, 400);
+        ['ph1', 'ph2', 'nl', 'prf', 'pw', 'f2in'].forEach(id => {
+            const handler = debounce(() => { markParamsDirty(); updateWindowRanges(); updateFskNPulses(); }, 400);
             $(id).addEventListener('input', handler);
             $(id).addEventListener('keydown', e => {
-                if (e.key === 'Enter') { markParamsDirty(); updateWindowRanges(); }
+                if (e.key === 'Enter') { markParamsDirty(); updateWindowRanges(); updateFskNPulses(); }
             });
         });
 
         // FSK save-state: each mode (normal/pwm vs fsk) remembers its own f1/f2 independently.
-        // First FSK entry defaults to 2000/2100; subsequent re-entries restore last FSK values.
-        let fskSavedFreqs = { f1: 2000, f2: 2100 };   // FSK mode's own saved f1/f2
+        // First FSK entry defaults to 2000 outside / 2100 inside; subsequent re-entries restore last FSK values.
+        let fskSavedFreqs = { f1: 2000, f2: 2000, f2in: 2100 };   // FSK mode's own saved freqs
         let normSavedFreqs = { f1: sharedParams.f1, f2: sharedParams.f2 }; // normal/pwm saved f1/f2
+
+        function applyFskUiState(entering) {
+            // Toggle the extra "inside pulse" row
+            $('fsk-f2in-row').style.display = entering ? '' : 'none';
+            // Rename the f2 label
+            $('f2-label').textContent = entering ? 'Freq 2 outside pulse (Hz)' : 'Frequency 2 (Hz)';
+        }
+
+        function updateFskNPulses() {
+            if (tiMode !== 'fsk') return;
+            const f2out = fv('f2', 2000);
+            const f2in = fv('f2in', 2100);
+            const pwMs = fv('pw', 10);
+            const diffFreq = Math.abs(f2in - f2out);
+            const el = $('fsk-npulses');
+            if (diffFreq === 0) {
+                el.textContent = '∞';
+            } else {
+                const diffPeriod = 1 / diffFreq;          // seconds
+                const pulseDur = pwMs / 1000;            // seconds
+                const nPulses = pulseDur / diffPeriod;  // = pulseDur * diffFreq
+                el.textContent = nPulses.toFixed(2);
+            }
+        }
+
         ['normal', 'pwm', 'fsk'].forEach(m => {
             $('btn-' + m).addEventListener('click', () => {
                 const leavingFsk = tiMode === 'fsk' && m !== 'fsk';
@@ -2343,18 +2609,22 @@ on a Python script which was made by Copilot AI.-->
                     normSavedFreqs = { f1: sharedParams.f1, f2: sharedParams.f2 };
                     sharedParams.f1 = fskSavedFreqs.f1;
                     sharedParams.f2 = fskSavedFreqs.f2;
+                    sharedParams.f2in = fskSavedFreqs.f2in;
                     syncAllUI();
+                    applyFskUiState(true);
                 } else if (leavingFsk) {
                     // Save current FSK freqs, restore non-FSK freqs
-                    fskSavedFreqs = { f1: sharedParams.f1, f2: sharedParams.f2 };
+                    fskSavedFreqs = { f1: sharedParams.f1, f2: sharedParams.f2, f2in: sharedParams.f2in };
                     sharedParams.f1 = normSavedFreqs.f1;
                     sharedParams.f2 = normSavedFreqs.f2;
                     syncAllUI();
+                    applyFskUiState(false);
                 }
                 tiMode = m;
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
                 $('btn-' + m).classList.add('active');
                 $('fsk-card').style.display = m === 'fsk' ? '' : 'none';
+                updateFskNPulses();
                 updateWindowRanges();
                 markParamsDirty();
             });
@@ -2533,10 +2803,10 @@ on a Python script which was made by Copilot AI.-->
         }
 
         function fdUpdateLabels(p) {
-            $('fd-lbl-A').innerHTML = `<span style="color:var(--dim)">Pair A · |E₁| — ${p.f1} Hz &nbsp;|&nbsp; E${p.a}(+) → E${p.b}(−)</span>`;
-            $('fd-lbl-B').innerHTML = `<span style="color:var(--dim)">Pair B · |E₂| — ${p.f2} Hz &nbsp;|&nbsp; E${p.c}(+) → E${p.d}(−)</span>`;
+            $('fd-lbl-AB').innerHTML = `<span style="color:var(--dim)">A+B · |E₁| <span style="color:#ff6655">red</span> &nbsp;|&nbsp; |E₂| <span style="color:#4488ff">blue</span> &nbsp;·&nbsp; E${p.a}→E${p.b} / E${p.c}→E${p.d}</span>`;
             $('fd-lbl-TI').innerHTML = `<span style="color:var(--dim)">TI envelope X &nbsp;|&nbsp; Δf = ${Math.abs(p.f2 - p.f1)} Hz</span>`;
             $('fd-lbl-ST').innerHTML = `<span style="color:var(--dim)">TI envelope Y &nbsp;|&nbsp; Δf = ${Math.abs(p.f2 - p.f1)} Hz</span>`;
+            $('fd-lbl-MMTI').innerHTML = `<span style="color:var(--dim)">TI envelope Max &nbsp;|&nbsp; Δf = ${Math.abs(p.f2 - p.f1)} Hz</span>`;
         }
 
         function fdPercMax(arr, mask, pct) {
@@ -2663,7 +2933,7 @@ on a Python script which was made by Copilot AI.-->
                         const t = Math.pow(M[gi] / vmax, 0.8);
                         const [r, g, b] = fdViridisColor(t);
                         if (M[gi] >= thr) {
-                            img.data[idx] = Math.min(255, r + 60); img.data[idx + 1] = Math.min(255, g + 120); img.data[idx + 2] = Math.min(255, b + 60);
+                            img.data[idx] = Math.min(255, r - 60); img.data[idx + 1] = Math.min(255, g - 120); img.data[idx + 2] = Math.min(255, b - 60);
                         } else {
                             img.data[idx] = r; img.data[idx + 1] = g; img.data[idx + 2] = b;
                         }
@@ -2678,21 +2948,123 @@ on a Python script which was made by Copilot AI.-->
             ctx.stroke(); ctx.setLineDash([]);
             const ec = {};
             for (let i = 0; i < FD_N_ELEC; i++) ec[i] = '#444';
-            ec[p.a] = '#4488ff'; ec[p.b] = '#4488ff'; ec[p.c] = '#ff5533'; ec[p.d] = '#ff5533';
+            ec[p.a] = '#ff5533'; ec[p.b] = '#ff5533'; ec[p.c] = '#4488ff'; ec[p.d] = '#4488ff';
             fdDrawElectrodes(ctx, pos, ec, lim, W);
+        }
+
+        // Colour ramps for combined plot (on white background)
+        function fdRedColorWhite(t) {
+            t = Math.max(0, Math.min(1, t));
+            // White (low) → vivid red (high)
+            return [255, Math.round(255 * (1 - t * 0.92)), Math.round(255 * (1 - t * 0.92))];
+        }
+        function fdBlueColorWhite(t) {
+            t = Math.max(0, Math.min(1, t));
+            // White (low) → vivid blue (high)
+            return [Math.round(255 * (1 - t * 0.88)), Math.round(255 * (1 - t * 0.82)), 255];
+        }
+
+        function fdDrawCombined(canvasId, mag1, mag2, E1x, E1y, E2x, E2y, mask, N, lim, pos, p) {
+            const cv = $(canvasId);
+            const wrap = cv.parentElement;
+            const W = wrap.clientWidth || 300;
+            cv.width = W; cv.height = W;
+            const ctx = cv.getContext('2d');
+            const img = ctx.createImageData(W, W);
+
+            const vmax1 = fdPercMax(mag1, mask, 0.95);
+            const vmax2 = fdPercMax(mag2, mask, 0.95);
+
+            for (let py = 0; py < W; py++) {
+                for (let px = 0; px < W; px++) {
+                    const wx = -lim + px * 2 * lim / W;
+                    const wy = lim - py * 2 * lim / W;
+                    const gi = fdGridIdx(wx, wy, lim, N);
+                    const idx = (py * W + px) * 4;
+                    if (gi < 0 || !mask[gi]) {
+                        // Outside head: dark background
+                        img.data[idx] = 13; img.data[idx + 1] = 23; img.data[idx + 2] = 42; img.data[idx + 3] = 255;
+                    } else {
+                        const t1 = Math.pow(mag1[gi] / vmax1, 0.25);
+                        const t2 = Math.pow(mag2[gi] / vmax2, 0.25);
+                        const [r1, g1, b1] = fdRedColorWhite(t1);
+                        const [r2, g2, b2] = fdBlueColorWhite(t2);
+                        // Additive blend on white: multiply (screen-like) — min of each channel
+                        img.data[idx] = Math.min(255, Math.round((r1 / 255) * (r2 / 255) * 255));
+                        img.data[idx + 1] = Math.min(255, Math.round((g1 / 255) * (g2 / 255) * 255));
+                        img.data[idx + 2] = Math.min(255, Math.round((b1 / 255) * (b2 / 255) * 255));
+                        img.data[idx + 3] = 255;
+                    }
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+
+            // Head boundary
+            const cx = W / 2, cy = W / 2, cr = p.hr / lim * W / 2;
+            ctx.beginPath(); ctx.arc(cx, cy, cr, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(80,80,80,0.35)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // Streamlines: Pair A in semi-transparent red, Pair B in semi-transparent blue
+            const savedStyle = ctx.strokeStyle;
+            ctx.strokeStyle = 'rgba(220,60,60,0.28)'; ctx.lineWidth = 0.7;
+            fdDrawStreamlinesColored(ctx, E1x, E1y, mask, N, lim, W, 'rgba(0,0,0,0.8)');
+            fdDrawStreamlinesColored(ctx, E2x, E2y, mask, N, lim, W, 'rgba(255,255,255,0.4)');
+
+            // Electrodes: Pair A red tones, Pair B blue tones
+            const ec = {};
+            for (let i = 0; i < FD_N_ELEC; i++) ec[i] = '#aaa';
+            ec[p.a] = '#ff4444'; ec[p.b] = '#ff8866';
+            ec[p.c] = '#4488ff'; ec[p.d] = '#66aaff';
+            fdDrawElectrodesOnWhite(ctx, pos, ec, lim, W);
+        }
+
+        function fdDrawStreamlinesColored(ctx, Fx, Fy, mask, N, lim, W, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 0.65;
+            const seeds = 18;
+            for (let si = 0; si < seeds; si++) {
+                for (let sj = 0; sj < seeds; sj++) {
+                    const sx = -lim * 0.85 + si * 2 * lim * 0.85 / seeds;
+                    const sy = -lim * 0.85 + sj * 2 * lim * 0.85 / seeds;
+                    if (sx * sx + sy * sy > (0.85 * lim * 0.9) ** 2) continue;
+                    ctx.beginPath();
+                    let x = sx, y = sy, started = false;
+                    for (let step = 0; step < 40; step++) {
+                        const gi = fdGridIdx(x, y, lim, N);
+                        if (gi < 0 || !mask[gi]) break;
+                        const px_ = (x + lim) / (2 * lim) * W, py_ = W - (y + lim) / (2 * lim) * W;
+                        const mag = Math.sqrt(Fx[gi] * Fx[gi] + Fy[gi] * Fy[gi]) + 1e-20;
+                        if (!started) { ctx.moveTo(px_, py_); started = true; } else ctx.lineTo(px_, py_);
+                        x += Fx[gi] / mag * lim * 0.04;
+                        y += Fy[gi] / mag * lim * 0.04;
+                    }
+                    if (started) ctx.stroke();
+                }
+            }
+        }
+
+        function fdDrawElectrodesOnWhite(ctx, pos, colorMap, lim, W) {
+            pos.forEach(([ex, ey], k) => {
+                const px = (ex + lim) / (2 * lim) * W;
+                const py = W - (ey + lim) / (2 * lim) * W;
+                ctx.beginPath(); ctx.arc(px, py, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = colorMap[k] || '#bbb';
+                ctx.fill();
+                ctx.strokeStyle = '#333'; ctx.lineWidth = 1.2; ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.font = '7px "IBM Plex Mono",monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(k, px, py);
+            });
         }
 
         function fdDrawAll() {
             if (!fdState) return;
             const { p, N, lim, MASK, pos, E1x, E1y, E2x, E2y, mag1, mag2, M, Mmax, Mx, My, Mxmax, Mymax } = fdState;
-            const ecA = {}, ecB = {};
-            for (let i = 0; i < FD_N_ELEC; i++) { ecA[i] = '#444'; ecB[i] = '#444'; }
-            ecA[p.a] = '#4488ff'; ecA[p.b] = '#ff6644';
-            ecB[p.c] = '#ff5533'; ecB[p.d] = '#4488ff';
-            fdDrawField('fd-cvA', mag1, MASK, N, lim, fdBlueColor, 0.95, ecA, pos, p.hr, E1x, E1y);
-            fdDrawField('fd-cvB', mag2, MASK, N, lim, fdRedColor, 0.95, ecB, pos, p.hr, E2x, E2y);
+            fdDrawCombined('fd-cvAB', mag1, mag2, E1x, E1y, E2x, E2y, MASK, N, lim, pos, p);
             fdDrawStim('fd-cvTI', Mx, Mxmax, MASK, N, lim, pos, p);
             fdDrawStim('fd-cvST', My, Mymax, MASK, N, lim, pos, p);
+            fdDrawStim('fd-cvMMTI', M, Mmax, MASK, N, lim, pos, p);
         }
 
         // ── Waveform modal ──────────────────────────────────────────
@@ -2779,12 +3151,13 @@ on a Python script which was made by Copilot AI.-->
             fdPlotSpectrumMulti(ctx2, [f], [A], ['#f7b74f'], W, 140, f * 1.5);
         }
 
-        function fdShowWaveEnvelope(M_amp, f1, f2, wx, wy) {
+        function fdShowWaveEnvelope(M_amp1, M_amp2, M_ampdF, f1, f2, wx, wy) {
             const df = Math.abs(f2 - f1);
+            const M_amp_sum = M_amp1 + M_amp2;
             const modal = $('fd-waveModal');
             $('fd-waveTitle').textContent = `TI envelope  ·  x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m`;
-            $('fd-eqTime').textContent = `y = ${M_amp.toExponential(3)} · sin(2π · ${df} · t)  [modulation envelope]`;
-            $('fd-eqFreq').textContent = `Envelope spike at Δf = ${df} Hz  |  M = ${M_amp.toExponential(3)} V/m`;
+            $('fd-eqTime').textContent = `y = ${M_ampdF.toExponential(3)} · sin(2π · ${df} · t)  [modulation envelope]`;
+            $('fd-eqFreq').textContent = `Envelope spike at Δf = ${df} Hz  |  M = ${M_ampdF.toExponential(3)} V/m`;
             modal.classList.add('open');
             const cvW = $('fd-cvWave');
             const W = cvW.offsetWidth || 300;
@@ -2794,16 +3167,19 @@ on a Python script which was made by Copilot AI.-->
             const Tmod = df > 0 ? 5 / df : 1 / f1;
             const npts = 22000;
             const times = Array.from({ length: npts }, (_, i) => i * Tmod / (npts - 1));
-            const vals = times.map(t => M_amp / 2 * (Math.sin(2 * Math.PI * f1 * t) + Math.sin(2 * Math.PI * f2 * t)));
-            const carrier = times.map(t => M_amp * Math.abs(Math.cos(Math.PI * df * t)));
-            fdPlotLine(ctx, times, vals, W, 140, 'rgba(255,255,255,0.6)', Tmod, M_amp > 0 ? M_amp : 1);
-            fdPlotLineRaw(ctx, times, carrier, W, 140, '#4fc3f7', Tmod, M_amp > 0 ? M_amp : 1, 1.5);
+            const vals = times.map(t => (M_amp1 * Math.cos(2 * Math.PI * f1 * t)) + (M_amp2 * Math.cos(2 * Math.PI * f2 * t)));
+            const vals_imag = times.map(t => (M_amp1 * Math.sin(2 * Math.PI * f1 * t)) + (M_amp2 * Math.sin(2 * Math.PI * f2 * t)));
+            const carrier = vals.map((v, i) =>
+                Math.sqrt(v * v + vals_imag[i] * vals_imag[i])
+            );
+            fdPlotLine(ctx, times, vals, W, 140, 'rgba(255,255,255,0.6)', Tmod, M_amp_sum > 0 ? M_amp_sum : 1);
+            fdPlotLineRaw(ctx, times, carrier, W, 140, '#4fc3f7', Tmod, M_amp_sum > 0 ? M_amp_sum : 1, 1.5);
             const cvF = $('fd-cvFFT');
             cvF.width = W; cvF.height = 140;
             const ctx2 = cvF.getContext('2d');
             ctx2.fillStyle = '#0d0f14'; ctx2.fillRect(0, 0, W, 140);
             const freqs = df > 0 ? [df, f1, f2] : [f1, f2];
-            const amps = df > 0 ? [M_amp, M_amp / 2, M_amp / 2] : [M_amp / 2, M_amp / 2];
+            const amps = df > 0 ? [M_ampdF, M_amp1, M_amp2] : [M_amp1, M_amp2];
             const colors = df > 0 ? ['#4fc3f7', '#888', '#888'] : ['#888', '#888'];
             fdPlotSpectrumMulti(ctx2, freqs, amps, colors, W, 140, Math.max(f1, f2) * 1.1 || 100);
             $('fd-eqFreq').textContent = `Δf=${df}Hz (envelope) | f₁=${f1}Hz | f₂=${f2}Hz`;
@@ -2822,26 +3198,218 @@ on a Python script which was made by Copilot AI.-->
             const gi = fdGridIdx(wx, wy, lim, N);
             if (gi < 0 || !MASK[gi]) return;
             const infoEl = $('fd-info-' + panelType);
-            if (panelType === 'A') {
-                const amp = Math.sqrt(E1x[gi] * E1x[gi] + E1y[gi] * E1y[gi]);
-                infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  |E₁|=${amp.toExponential(3)} V/m`;
-                fdShowWaveCarrier(amp, p.f1, 'A', wx, wy);
-            } else if (panelType === 'B') {
-                const amp = Math.sqrt(E2x[gi] * E2x[gi] + E2y[gi] * E2y[gi]);
-                infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  |E₂|=${amp.toExponential(3)} V/m`;
-                fdShowWaveCarrier(amp, p.f2, 'B', wx, wy);
+            const amp1_x = Math.abs(E1x[gi]);
+            const amp2_x = Math.abs(E2x[gi]);
+            const amp1_y = Math.abs(E1y[gi]);
+            const amp2_y = Math.abs(E2y[gi]);
+            if (panelType === 'AB') {
+                const amp1 = Math.sqrt(E1x[gi] * E1x[gi] + E1y[gi] * E1y[gi]);
+                const amp2 = Math.sqrt(E2x[gi] * E2x[gi] + E2y[gi] * E2y[gi]);
+                infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  |E₁|=${amp1.toExponential(3)}  |E₂|=${amp2.toExponential(3)} V/m`;
+                fdShowWaveCarrier(amp1, p.f1, 'A', wx, wy);
+                fdShowWaveCarrier(amp2, p.f2, 'B', wx, wy);
+
             } else if (panelType === 'TI') {
-                const mval = Mx[gi];
+                const mval1 = amp1_x;
+                const mval2 = amp2_x;
+                const mval = mval1 + mval2;
+                const mval_dF = My[gi];
                 infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  M=${mval.toExponential(3)} V/m`;
-                fdShowWaveEnvelope(mval / 10, p.f1, p.f2, wx, wy);
-            } else {
-                const mval = My[gi];
+                fdShowWaveEnvelope(mval1, mval2, mval_dF, p.f1, p.f2, wx, wy);
+            }
+            else if (panelType === 'ST') {
+                const mval1 = amp1_y;
+                const mval2 = amp2_y;
+                const mval = mval1 + mval2;
+                const mval_dF = My[gi];
                 infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  M=${mval.toExponential(3)} V/m`;
-                fdShowWaveEnvelope(mval, p.f1, p.f2, wx, wy);
+                fdShowWaveEnvelope(mval1, mval2, mval_dF, p.f1, p.f2, wx, wy);
+
+            } else if (panelType == 'MMTI') {
+                const mval1 = Math.sqrt(E1x[gi] * E1x[gi] + E1y[gi] * E1y[gi]);
+                const mval2 = Math.sqrt(E2x[gi] * E2x[gi] + E2y[gi] * E2y[gi]);
+                const mval = mval1 + mval2;
+                const mval_dF = M[gi];
+                infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  M=${mval.toExponential(3)} V/m`;
+                fdShowWaveEnvelope(mval1, mval2, mval_dF, p.f1, p.f2, wx, wy);
             }
         }
 
-        // ── Init field distribution controls ──
+        // ══════════════════════════════════════════════════════════════════
+        // ELECTRODE PLACEMENT DIAGRAM — 10-10 Montage
+        // ══════════════════════════════════════════════════════════════════
+
+        // 10-10 electrode labels from options.txt
+        const ELECTRODE_LABELS = [
+            "FP1", "FPz", "FP2", "AF7", "AF3", "AFz", "AF4", "AF8",
+            "F9", "F7", "F5", "F3", "F1", "Fz", "F2", "F4", "F6", "F8", "F10",
+            "FT9", "FT7", "FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6", "FT8", "FT10",
+            "T9", "T7", "C5", "C3", "C1", "Cz", "C2", "C4", "C6", "T8", "T10",
+            "TP9", "TP7", "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6", "TP8", "TP10",
+            "P9", "P7", "P5", "P3", "P1", "Pz", "P2", "P4", "P6", "P8", "P10",
+            "PO7", "PO3", "POz", "PO4", "PO8",
+            "O1", "Oz", "O2"
+        ];
+
+        // ─────────────────────────────────────────────────────────────────
+        // ELECTRODE POSITIONS (SVG coordinate space, viewBox 560x340)
+        //
+        // These are computed from the PNG (467x406 px) mapped onto the SVG
+        // image element: x=168, y=58, width=224, height=195.
+        //
+        // MANUAL OVERRIDE: If any electrode dot lands in the wrong spot,
+        // edit its [x, y] values here. The coordinates are in SVG units
+        // matching the viewBox="0 0 560 340" of the diagram SVG.
+        // ─────────────────────────────────────────────────────────────────
+        const ELECTRODE_POSITIONS = {
+            "FP1": [254.5, 97.8],   // also stored as Fp1
+            "FPz": [279.8, 94.4],
+            "FP2": [305.1, 97.8],
+            "AFz": [279.8, 115.2],
+            "AF7": [231.7, 110.2],
+            "AF3": [250.5, 115.2],
+            "AF4": [309.1, 115.2],
+            "AF8": [327.9, 110.2],
+            "F9": [192.4, 123],
+            "F7": [213, 129.2],
+            "F5": [230.1, 132.3],
+            "F3": [246.8, 134],
+            "F1": [263.5, 135],
+            "Fz": [279.8, 136],
+            "F2": [296.1, 135],
+            "F4": [312.8, 134],
+            "F6": [329.5, 132.3],
+            "F8": [346.6, 129.2],
+            "F10": [367.2, 123],
+            "FT9": [180.3, 148.8],
+            "FT7": [201.6, 150.8],
+            "FC5": [220.9, 153.8],
+            "FC3": [240.3, 155.8],
+            "FC1": [260.8, 155.8],
+            "FCz": [279.8, 155.8],
+            "FC2": [298.8, 155.8],
+            "FC4": [319.3, 155.8],
+            "FC6": [338.7, 153.8],
+            "FT8": [358, 150.8],
+            "FT10": [379.3, 148.8],
+            "T9": [177.8, 177.6],
+            "T7": [197.8, 177.6],
+            "C5": [218.8, 177.6],
+            "C3": [239.8, 177.6],
+            "C1": [259.8, 177.6],
+            "Cz": [279.8, 177.6],
+            "C2": [299.8, 177.6],
+            "C4": [319.8, 177.6],
+            "C6": [340.8, 177.6],
+            "T8": [361.8, 177.6],
+            "T10": [382.8, 177.6],
+            "TP9": [180.3, 204.4],
+            "TP7": [201.6, 201.4],
+            "CP5": [220.9, 198.4],
+            "CP3": [240.3, 197.4],
+            "CP1": [260.8, 196.4],
+            "CPz": [279.8, 196.4],
+            "CP2": [298.8, 196.4],
+            "CP4": [319.3, 197.4],
+            "CP6": [338.7, 198.4],
+            "TP8": [358, 201.4],
+            "TP10": [379.3, 204.4],
+            "P9": [192.4, 231.2],
+            "P7": [213, 224.2],
+            "P5": [230.1, 221.2],
+            "P3": [246.8, 218.2],
+            "P1": [263.5, 217.2],
+            "Pz": [279.8, 217.2],
+            "P2": [296.1, 217.2],
+            "P4": [312.8, 218.2],
+            "P6": [329.5, 221.2],
+            "P8": [346.6, 224.2],
+            "P10": [367.2, 231.2],
+            "PO7": [231.7, 242],
+            "PO3": [250.5, 239],
+            "POz": [279.8, 239],
+            "PO4": [309.1, 239],
+            "PO8": [327.9, 242],
+            "O1": [253.5, 255.7],
+            "Oz": [279.8, 259.7],
+            "O2": [306.1, 255.7],
+            "Iz": [279.8, 242.9],
+        };
+
+        // Helper: get SVG position for a label (case-insensitive fallback)
+        function getElecPos(label) {
+            if (ELECTRODE_POSITIONS[label]) return ELECTRODE_POSITIONS[label];
+            // Try case-insensitive match
+            const lc = label.toLowerCase();
+            for (const k of Object.keys(ELECTRODE_POSITIONS)) {
+                if (k.toLowerCase() === lc) return ELECTRODE_POSITIONS[k];
+            }
+            return [280, 155]; // fallback: centre of head
+        }
+
+        // Helper: build a right-angle polyline from a generator stub to an electrode point
+        // genSide: 'left' (I1, stub exits at x=116) or 'right' (I2, stub exits at x=444)
+        function buildLeadPoints(genSide, ex, ey) {
+            if (genSide === 'left') {
+                const mx = 140; // horizontal routing column
+                return `116,170 ${mx},170 ${mx},${ey} ${ex},${ey}`;
+            } else {
+                const mx = 420;
+                return `444,170 ${mx},170 ${mx},${ey} ${ex},${ey}`;
+            }
+        }
+
+        // Update label position offset so it doesn't overlap the dot
+        function labelOffset(genSide, ex, ey) {
+            // Place label slightly outward from the electrode dot
+            const ox = genSide === 'left' ? ex - 18 : ex + 18;
+            const oy = ey < 155 ? ey - 10 : ey + 14;
+            return [ox, oy];
+        }
+
+        function updateDiagramElectrode(role, label) {
+            // role: 'i1-active', 'i1-return', 'i2-active', 'i2-return'
+            const [ex, ey] = getElecPos(label);
+            const genSide = role.startsWith('i1') ? 'left' : 'right';
+            const pts = buildLeadPoints(genSide, ex, ey);
+            const [lx, ly] = labelOffset(genSide, ex, ey);
+
+            $(`diag-${role}-lead`).setAttribute('points', pts);
+            $(`diag-${role}-dot`).setAttribute('cx', ex);
+            $(`diag-${role}-dot`).setAttribute('cy', ey);
+            $(`diag-${role}-lbl`).setAttribute('x', lx);
+            $(`diag-${role}-lbl`).setAttribute('y', ly);
+            $(`diag-${role}-lbl`).textContent = label;
+        }
+
+        // Populate all four select dropdowns with electrode options
+        (function initElectrodeSelects() {
+            const selectIds = ['i1-active', 'i1-return', 'i2-active', 'i2-return'];
+            // Default selections matching the original diagram geometry
+            const defaults = { 'i1-active': 'FC3', 'i1-return': 'CP3', 'i2-active': 'FC4', 'i2-return': 'CP4' };
+
+            selectIds.forEach(id => {
+                const sel = $(id);
+                ELECTRODE_LABELS.forEach(lbl => {
+                    const opt = document.createElement('option');
+                    opt.value = lbl;
+                    opt.textContent = lbl;
+                    sel.appendChild(opt);
+                });
+                sel.value = defaults[id] || ELECTRODE_LABELS[0];
+
+                // Wire change event
+                sel.addEventListener('change', () => {
+                    const role = id; // 'i1-active', etc.
+                    updateDiagramElectrode(role, sel.value);
+                });
+            });
+
+            // Set initial diagram positions
+            selectIds.forEach(id => updateDiagramElectrode(id, $(id).value));
+        })();
+
+
         (function fdInit() {
             // Populate electrode selects
             ['fd-sel-a', 'fd-sel-b', 'fd-sel-c', 'fd-sel-d'].forEach(id => {
@@ -2879,11 +3447,35 @@ on a Python script which was made by Copilot AI.-->
                 $(id).addEventListener('change', onTab2AmpChange);
             });
 
-            // Run button
-            $('fd-run-btn').addEventListener('click', fdCompute);
+            // Auto-compute with debounce — fires 600 ms after the last parameter change
+            let _fdAutoTimer;
+            function fdScheduleCompute() {
+                clearTimeout(_fdAutoTimer);
+                _fdAutoTimer = setTimeout(fdCompute, 600);
+            }
+
+            // Wire all field-distribution-specific parameters to the debounced recompute
+            ['fd-sel-a', 'fd-sel-b', 'fd-sel-c', 'fd-sel-d'].forEach(id => {
+                $(id).addEventListener('change', fdScheduleCompute);
+            });
+            ['fd-sigma', 'fd-hr', 'fd-thresh'].forEach(id => {
+                $(id).addEventListener('input', fdScheduleCompute);
+                $(id).addEventListener('change', fdScheduleCompute);
+            });
+            // fd-f1/fd-f2 and fd-I1/fd-I2 already have their own listeners above
+            // (onTab2FreqChange / onTab2AmpChange) which call markParamsDirty;
+            // additionally schedule a field recompute when they change
+            ['fd-f1', 'fd-f2'].forEach(id => {
+                $(id).addEventListener('change', fdScheduleCompute);
+                $(id).addEventListener('blur', fdScheduleCompute);
+            });
+            ['fd-I1', 'fd-I2'].forEach(id => {
+                $(id).addEventListener('input', fdScheduleCompute);
+                $(id).addEventListener('change', fdScheduleCompute);
+            });
 
             // Canvas click handlers
-            const map = { 'fd-cvA': 'A', 'fd-cvB': 'B', 'fd-cvTI': 'TI', 'fd-cvST': 'ST' };
+            const map = { 'fd-cvAB': 'AB', 'fd-cvTI': 'TI', 'fd-cvST': 'ST', 'fd-cvMMTI': 'MMTI' };
             Object.keys(map).forEach(id => {
                 $(id).addEventListener('click', e => fdCanvasClick(e, id, map[id]));
             });
