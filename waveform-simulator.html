@@ -5,10 +5,6 @@ permalink: /simulator/
 
 <!--This document was made by Claude AI. It is based
 on a Python script which was made by Copilot AI.
-TODO:
-* The first field distribution figure only shows one plot when you click on it, needs to be updated to overlap both.
-* Need to be able to download snapshot of set parameters
-* Stretch: at download screen, allow user defined ramp duration and stim durations and show plots of entire waveforms.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -1249,6 +1245,13 @@ TODO:
                                             href="https://doi.org/10.1007/978-3-642-38256-7_18" target="_blank">figure
                                             source</a>)
                                     </text>
+                                    <foreignObject x="140" y="323" width="280" height="16">
+                                        <div xmlns="http://www.w3.org/1999/xhtml" style="text-align:center">
+                                            <a href="#" id="dl-params-link"
+                                                style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#ffe031;text-decoration:underline;cursor:pointer;letter-spacing:.04em"
+                                                onclick="openDlModal(event)">Download Parameters</a>
+                                        </div>
+                                    </foreignObject>
                                 </svg>
                             </div>
                         </div><!-- /ti-diagram -->
@@ -1318,6 +1321,61 @@ TODO:
                 </div><!-- /ti-right -->
 
             </div><!-- /ti-panel -->
+        </div>
+
+        <!-- ── Download Parameters Modal ── -->
+        <div id="dl-modal"
+            style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:200;align-items:center;justify-content:center">
+            <div
+                style="background:var(--panel);border:1px solid var(--accent);border-radius:var(--rad);padding:20px;width:780px;max-width:97vw;max-height:94vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                    <span
+                        style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:.1em;text-transform:uppercase">Download
+                        Parameters</span>
+                    <button id="dl-modal-close"
+                        style="background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;line-height:1;transition:color .15s">✕</button>
+                </div>
+                <div
+                    style="display:flex;gap:16px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--rad);padding:12px 14px;align-items:center">
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font-size:11px;color:var(--dim);white-space:nowrap">Ramp Duration (s)</span>
+                        <input id="dl-ramp" type="number" min="0" step="0.1" value="1"
+                            style="width:70px;padding:3px 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--head);background:var(--bg);border:1px solid var(--border);border-radius:3px;text-align:right;outline:none">
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font-size:11px;color:var(--dim);white-space:nowrap">Stimulation Duration (s)</span>
+                        <input id="dl-stim" type="number" min="0" step="0.1" value="10"
+                            style="width:70px;padding:3px 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--head);background:var(--bg);border:1px solid var(--border);border-radius:3px;text-align:right;outline:none">
+                    </div>
+                    <button id="dl-csv-btn"
+                        style="padding:5px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--bg);background:var(--accent);border:none;border-radius:3px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;margin-left:auto">⬇
+                        Download CSV</button>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div
+                        style="grid-column:1/-1;background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden">
+                        <div
+                            style="padding:5px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:center">
+                            <span>I1 &amp; I2 · Full Recording (with ramp)</span>
+                            <span style="color:#ff6b6b">━ I1</span>
+                            <span style="color:#4fc3f7">━ I2</span>
+                        </div>
+                        <canvas id="dl-cv-i1i2" style="display:block;width:100%;height:200px"></canvas>
+                    </div>
+                    <div
+                        style="grid-column:1/-1;background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden">
+                        <div
+                            style="padding:5px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:center">
+                            <span>Sum (I1+I2) &amp; Envelope · Full Recording</span>
+                            <span style="color:#69db7c">━ Sum</span>
+                            <span style="color:#cc5de8">━ Env</span>
+                        </div>
+                        <canvas id="dl-cv-sum" style="display:block;width:100%;height:200px"></canvas>
+                    </div>
+                </div>
+                <div id="dl-info"
+                    style="font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace;min-height:14px"></div>
+            </div>
         </div>
 
         <!-- TAB 2: Field Distribution Visualiser -->
@@ -3151,6 +3209,30 @@ TODO:
             fdPlotSpectrumMulti(ctx2, [f], [A], ['#f7b74f'], W, 140, f * 1.5);
         }
 
+        function fdShowWaveCarriers(A1, f1, A2, f2, wx, wy) {
+            const modal = $('fd-waveModal');
+            $('fd-waveTitle').textContent = `Pair A and B carrier fields  ·  x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m`;
+            $('fd-eqTime').textContent = `y1 = ${A1.toExponential(3)} · sin(2π · ${f1} · t), y2 = ${A2.toExponential(3)} · sin(2π · ${f2} · t)`;
+            $('fd-eqFreq').textContent = `Spike at f1 = ${f1} Hz  |  A1 = ${A1.toExponential(3)} V/m, f2 = ${f2} Hz  |  A1 = ${A2.toExponential(3)} V/m`;
+            modal.classList.add('open');
+            const cvW = $('fd-cvWave');
+            const W = cvW.offsetWidth || 300;
+            cvW.width = W; cvW.height = 140;
+            const ctx = cvW.getContext('2d');
+            ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, W, 140);
+            const T = 10 / f1, npts = 8000;
+            const times = Array.from({ length: npts }, (_, i) => i * T / (npts - 1));
+            const vals1 = times.map(t => A1 * Math.sin(2 * Math.PI * f1 * t));
+            const vals2 = times.map(t => A2 * Math.sin(2 * Math.PI * f2 * t));
+            fdPlotLine(ctx, times, vals1, W, 140, '#ff6647', T, A1 > A2 ? A1 : A2);
+            fdPlotLineRaw(ctx, times, vals2, W, 140, '#4775ff', T, A1 > A2 ? A1 : A2, 1.5);
+            const cvF = $('fd-cvFFT');
+            cvF.width = W; cvF.height = 140;
+            const ctx2 = cvF.getContext('2d');
+            ctx2.fillStyle = '#0d0f14'; ctx2.fillRect(0, 0, W, 140);
+            fdPlotSpectrumMulti(ctx2, [f1, f2], [A1, A2], ['#f7b74f'], W, 140, f1 * 1.5);
+        }
+
         function fdShowWaveEnvelope(M_amp1, M_amp2, M_ampdF, f1, f2, wx, wy) {
             const df = Math.abs(f2 - f1);
             const M_amp_sum = M_amp1 + M_amp2;
@@ -3206,8 +3288,7 @@ TODO:
                 const amp1 = Math.sqrt(E1x[gi] * E1x[gi] + E1y[gi] * E1y[gi]);
                 const amp2 = Math.sqrt(E2x[gi] * E2x[gi] + E2y[gi] * E2y[gi]);
                 infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  |E₁|=${amp1.toExponential(3)}  |E₂|=${amp2.toExponential(3)} V/m`;
-                fdShowWaveCarrier(amp1, p.f1, 'A', wx, wy);
-                fdShowWaveCarrier(amp2, p.f2, 'B', wx, wy);
+                fdShowWaveCarriers(amp1, p.f1, amp2, p.f2, wx, wy);
 
             } else if (panelType === 'TI') {
                 const mval1 = amp1_x;
@@ -3233,6 +3314,303 @@ TODO:
                 infoEl.textContent = `x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m  M=${mval.toExponential(3)} V/m`;
                 fdShowWaveEnvelope(mval1, mval2, mval_dF, p.f1, p.f2, wx, wy);
             }
+        }
+
+        /* ════════════════════════════════════════════════════════
+           DOWNLOAD PARAMETERS MODAL
+        ════════════════════════════════════════════════════════ */
+
+        function openDlModal(e) {
+            if (e) e.preventDefault();
+            const modal = $('dl-modal');
+            modal.style.display = 'flex';
+            dlRenderPlots();
+        }
+
+        $('dl-modal-close').addEventListener('click', () => {
+            $('dl-modal').style.display = 'none';
+        });
+        $('dl-modal').addEventListener('click', function (e) {
+            if (e.target === this) this.style.display = 'none';
+        });
+
+        ['dl-ramp', 'dl-stim'].forEach(id => {
+            $(id).addEventListener('input', dlRenderPlots);
+            $(id).addEventListener('change', dlRenderPlots);
+        });
+
+        $('dl-csv-btn').addEventListener('click', dlDownloadCSV);
+
+        function dlGetParams() {
+            const ramp = Math.max(0, parseFloat($('dl-ramp').value) || 1);
+            const stim = Math.max(0, parseFloat($('dl-stim').value) || 10);
+            const totalDur = ramp * 2 + stim;
+            return {
+                ramp, stim, totalDur,
+                f1: fv('f1', 2000), f2: fv('f2', 2010), f2in: fv('f2in', 2100),
+                a1: fv('a1', 1), a2: fv('a2', 1),
+                ph1: fv('ph1', 0) * Math.PI / 180,
+                ph2: fv('ph2', 180) * Math.PI / 180,
+                prf: fv('prf', 10), pw: fv('pw', 10) / 1000,
+                mode: tiMode,
+                i1Active: $('i1-active').value, i1Return: $('i1-return').value,
+                i2Active: $('i2-active').value, i2Return: $('i2-return').value
+            };
+        }
+
+        function dlRampEnv(t, ramp, stim, total) {
+            if (t < 0 || t > total) return 0;
+            if (t < ramp) return t / ramp;
+            if (t < ramp + stim) return 1;
+            return (total - t) / ramp;
+        }
+
+        function dlGenerateSamples() {
+            const p = dlGetParams();
+            // Use a reduced sample rate for plotting (not full 16384)
+            // Enough to represent the waveforms accurately for display + CSV
+            // We pick enough pts to have ~20 pts per cycle of the higher freq
+            const maxFreq = Math.max(p.f1, p.f2, p.f2in || 0);
+            // For CSV: cap at 5000 pts total for practicality; for plot: also 5000
+            const nPts = p.totalDur * 100000;
+            const dt = p.totalDur / (nPts - 1);
+            const t = new Float64Array(nPts);
+            const i1 = new Float64Array(nPts);
+            const i2 = new Float64Array(nPts);
+            const sum = new Float64Array(nPts);
+            const env = new Float64Array(nPts);
+
+            const fskPeriod = p.prf > 0 ? 1 / p.prf : 1;
+            const fskPW = p.pw;
+
+            let phi2PulseEndAccum = 0;
+            let lastInPulse = 0;
+            let phi2 = - PI2 * p.f2in * dt;
+
+            for (let k = 0; k < nPts; k++) {
+                const tk = k * dt;
+                t[k] = tk;
+                const amp = dlRampEnv(tk, p.ramp, p.stim, p.totalDur);
+
+                const phi1 = 2 * Math.PI * p.f1 * tk + p.ph1;
+                if (p.mode === 'fsk') {
+                    // Simplified FSK: determine if we're inside a pulse
+                    const tmod = tk % fskPeriod;
+                    const inPulse = tmod < fskPW;
+                    const f2eff = inPulse ? p.f2in : p.f2;
+                    const dTheta2 = PI2 * f2eff * dt;
+
+                    if (inPulse === 0) {
+                        if (lastInPulse === 1) {
+                            phi2PulseEndAccum += Math.PI / 2 * (1 - Math.cos(PI2 * Math.abs(p.f2in - p.f2) * fskPW));
+                        }
+                    }
+
+                    phi2 += dTheta2;
+
+                    lastInPulse = inPulse;
+                } else {
+                    phi2 = 2 * Math.PI * p.f2 * tk;
+                }
+
+                let c1; let c2;
+                if (p.mode === 'pwm') {
+                    c1 = Math.sign(Math.cos(phi1));
+                    c2 = Math.sign(Math.cos(phi2 + p.ph2 + phi2PulseEndAccum));
+                }
+                else {
+                    c1 = Math.cos(phi1);
+                    c2 = Math.cos(phi2 + p.ph2 + phi2PulseEndAccum);
+                }
+
+                i1[k] = amp * p.a1 * c1;
+                i2[k] = amp * p.a2 * c2;
+                sum[k] = i1[k] + i2[k];
+
+                // Envelope: analytic amplitude of sum
+                const sr = p.a1 * amp * Math.cos(phi1) + p.a2 * amp * Math.cos(phi2 + p.ph2 + phi2PulseEndAccum);
+                const si = p.a1 * amp * Math.sin(phi1) + p.a2 * amp * Math.sin(phi2 + p.ph2 + phi2PulseEndAccum);
+                env[k] = Math.sqrt(sr * sr + si * si);
+            }
+            return { t, i1, i2, sum, env, nPts, p };
+        }
+
+        function dlDrawSnapshotCanvas(cv, series, tArr, nPts, totalDur, yLabel) {
+            const W = cv.offsetWidth || cv.width;
+            const H = cv.offsetHeight || cv.height;
+            // Set actual pixel dimensions (handle DPR for sharpness)
+            const dpr = window.devicePixelRatio || 1;
+            cv.width = W * dpr; cv.height = H * dpr;
+            cv.style.width = W + 'px'; cv.style.height = H + 'px';
+            const ctx = cv.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const P = { l: 46, r: 12, t: 10, b: 28 };
+            const PW = W - P.l - P.r, PH = H - P.t - P.b;
+            ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = COL.bg; ctx.fillRect(P.l, P.t, PW, PH);
+
+            // Y range
+            let yMin = Infinity, yMax = -Infinity;
+            for (const s of series) {
+                for (let i = 0; i < s.data.length; i++) {
+                    if (s.data[i] < yMin) yMin = s.data[i];
+                    if (s.data[i] > yMax) yMax = s.data[i];
+                }
+            }
+            if (!isFinite(yMin) || yMin === yMax) { yMin = -1; yMax = 1; }
+            const pad = (yMax - yMin) * 0.1 || 0.1;
+            yMin -= pad; yMax += pad;
+
+            const toX = v => P.l + (v / totalDur) * PW;
+            const toY = v => P.t + PH - (v - yMin) / (yMax - yMin) * PH;
+
+            // Grid
+            ctx.font = '9px "IBM Plex Mono",monospace';
+            for (let i = 0; i <= 4; i++) {
+                const v = yMin + (yMax - yMin) * i / 4, y = toY(v);
+                ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(P.l + PW, y); ctx.stroke();
+                ctx.fillStyle = COL.text; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                ctx.fillText(v.toFixed(2), P.l - 4, y);
+            }
+            for (let i = 0; i <= 5; i++) {
+                const v = totalDur * i / 5, x = toX(v);
+                ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, P.t + PH); ctx.stroke();
+                ctx.fillStyle = COL.text; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.fillText(v.toFixed(1) + 's', x, P.t + PH + 4);
+            }
+            ctx.strokeStyle = COL.axis; ctx.lineWidth = 1;
+            ctx.strokeRect(P.l, P.t, PW, PH);
+
+            // Axis labels
+            ctx.fillStyle = COL.axis; ctx.font = '9px "IBM Plex Mono",monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillText('Time (s)', P.l + PW / 2, H - 1);
+            ctx.save(); ctx.translate(10, P.t + PH / 2); ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+            ctx.fillText(yLabel || 'mA', 0, 0); ctx.restore();
+
+            // Ramp shading
+            const ramp = parseFloat($('dl-ramp').value) || 1;
+            const stim = parseFloat($('dl-stim').value) || 10;
+            ctx.fillStyle = 'rgba(255,255,255,0.025)';
+            ctx.fillRect(P.l, P.t, toX(ramp) - P.l, PH);
+            ctx.fillRect(toX(ramp + stim), P.t, toX(totalDur) - toX(ramp + stim), PH);
+
+            // Series — peak-min rendering to avoid aliasing when many samples map to few pixels
+            ctx.save(); ctx.beginPath(); ctx.rect(P.l, P.t, PW, PH); ctx.clip();
+            const cols = Math.ceil(PW);
+            for (const s of series) {
+                ctx.strokeStyle = s.color; ctx.lineWidth = s.width || 1.5;
+                ctx.setLineDash(s.dash || []);
+                // Build per-pixel-column min/max arrays
+                const mn = new Float64Array(cols).fill(Infinity);
+                const mx = new Float64Array(cols).fill(-Infinity);
+                const scale = (cols - 1) / (nPts - 1);
+                for (let i = 0; i < nPts; i++) {
+                    const px = Math.round(i * scale);
+                    const v = s.data[i];
+                    if (v < mn[px]) mn[px] = v;
+                    if (v > mx[px]) mx[px] = v;
+                }
+                // Draw a vertical line per pixel column spanning min→max
+                for (let px = 0; px < cols; px++) {
+                    if (!isFinite(mn[px])) continue;
+                    const x = P.l + px;
+                    const y1 = toY(mx[px]), y2 = toY(mn[px]);
+                    ctx.beginPath();
+                    ctx.moveTo(x, y1);
+                    ctx.lineTo(x, y2 < y1 + 1 ? y1 + 1 : y2);
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
+        }
+
+        function dlRenderPlots() {
+            const { t, i1, i2, sum, env, nPts, p } = dlGenerateSamples();
+            const totalDur = p.totalDur;
+
+            // I1 + I2 superimposed
+            const cv1 = $('dl-cv-i1i2');
+            dlDrawSnapshotCanvas(cv1,
+                [{ data: i1, color: '#ff6b6b', width: 1.2 },
+                { data: i2, color: '#4fc3f7', width: 1.2 }],
+                t, nPts, totalDur, 'mA');
+
+            // Sum
+            const cv3 = $('dl-cv-sum');
+            dlDrawSnapshotCanvas(cv3,
+                [{ data: sum, color: '#69db7c', width: 1.2 }, { data: env, color: '#cc5de8', width: 1.5 }],
+                t, nPts, totalDur, 'mA');
+
+            // Info
+            $('dl-info').textContent = `Total duration: ${totalDur.toFixed(2)} s  ·  Ramp: ${p.ramp.toFixed(2)} s  ·  Stim: ${p.stim.toFixed(2)} s  ·  ${nPts} sample points`;
+        }
+
+        function dlDownloadCSV() {
+            const { t, i1, i2, sum, env, nPts, p } = dlGenerateSamples();
+            const rows = [];
+
+            // Header block
+            rows.push('# TI Stimulation Virtual Bench — Parameter Export');
+            rows.push('# Generated: ' + new Date().toISOString());
+            rows.push('#');
+            rows.push('# --- Stimulation Mode ---');
+            rows.push('Mode,' + p.mode);
+            rows.push('#');
+            rows.push('# --- I1 Parameters ---');
+            rows.push('Frequency_1_Hz,' + p.f1);
+            rows.push('Phase_1_deg,' + fv('ph1', 0));
+            rows.push('Amplitude_I1_mA,' + p.a1);
+            rows.push('I1_Active_Electrode,' + p.i1Active);
+            rows.push('I1_Return_Electrode,' + p.i1Return);
+            rows.push('#');
+            rows.push('# --- I2 Parameters ---');
+            if (p.mode === 'fsk') {
+                rows.push('Freq_2_outside_pulse_Hz,' + p.f2);
+                rows.push('Freq_2_inside_pulse_Hz,' + p.f2in);
+            } else {
+                rows.push('Frequency_2_Hz,' + p.f2);
+            }
+            rows.push('Phase_2_deg,' + fv('ph2', 180));
+            rows.push('Amplitude_I2_mA,' + p.a2);
+            rows.push('I2_Active_Electrode,' + p.i2Active);
+            rows.push('I2_Return_Electrode,' + p.i2Return);
+            rows.push('#');
+            if (p.mode === 'fsk') {
+                rows.push('# --- FSK Parameters ---');
+                rows.push('PRF_Hz,' + p.prf);
+                rows.push('Pulse_Duration_ms,' + fv('pw', 10));
+                rows.push('#');
+            }
+            rows.push('# --- Recording Parameters ---');
+            rows.push('Ramp_Duration_s,' + p.ramp);
+            rows.push('Stimulation_Duration_s,' + p.stim);
+            rows.push('Total_Duration_s,' + p.totalDur);
+            // rows.push('# Sample_Points,' + nPts);
+            // rows.push('#');
+            // rows.push('# --- Waveform Data ---');
+            // rows.push('Time_s,I1_mA,I2_mA,Sum_mA,Envelope_mA');
+
+            // for (let k = 0; k < nPts; k++) {
+            //     rows.push(
+            //         t[k].toFixed(6) + ',' +
+            //         i1[k].toFixed(6) + ',' +
+            //         i2[k].toFixed(6) + ',' +
+            //         sum[k].toFixed(6) + ',' +
+            //         env[k].toFixed(6)
+            //     );
+            // }
+
+            const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'ti_parameters.csv';
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         // ══════════════════════════════════════════════════════════════════
@@ -3420,10 +3798,10 @@ TODO:
                     sel.appendChild(opt);
                 }
             });
-            $('fd-sel-a').value = 1;
-            $('fd-sel-b').value = 4;
-            $('fd-sel-c').value = 11;
-            $('fd-sel-d').value = 8;
+            $('fd-sel-a').value = 11;
+            $('fd-sel-b').value = 8;
+            $('fd-sel-c').value = 1;
+            $('fd-sel-d').value = 4;
 
             // Slider label bindings (only for controls NOT in sharedParams)
             function fdBind(id, outId, fmt) {
