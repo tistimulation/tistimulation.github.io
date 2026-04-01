@@ -1361,6 +1361,19 @@ on a Python script which was made by Copilot AI.
                             <span style="color:#4fc3f7">━ I2</span>
                         </div>
                         <canvas id="dl-cv-i1i2" style="display:block;width:100%;height:200px"></canvas>
+                        <div class="plot-strip" style="background:var(--panel)">
+                            <div class="shdr">
+                                <span class="sname">Time Range</span>
+                                <span class="sval" id="dl-sv-i1i2">0.00 – … s</span>
+                            </div>
+                            <div class="dual-range" id="dr-dl-i1i2">
+                                <div class="track">
+                                    <div class="track-fill" id="dr-dl-i1i2-fill"></div>
+                                </div>
+                                <input type="range" id="dr-dl-i1i2-lo" min="0" max="1000" value="0" step="1">
+                                <input type="range" id="dr-dl-i1i2-hi" min="0" max="1000" value="1000" step="1">
+                            </div>
+                        </div>
                     </div>
                     <div
                         style="grid-column:1/-1;background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden">
@@ -1371,6 +1384,19 @@ on a Python script which was made by Copilot AI.
                             <span style="color:#cc5de8">━ Env</span>
                         </div>
                         <canvas id="dl-cv-sum" style="display:block;width:100%;height:200px"></canvas>
+                        <div class="plot-strip" style="background:var(--panel)">
+                            <div class="shdr">
+                                <span class="sname">Time Range</span>
+                                <span class="sval" id="dl-sv-sum">0.00 – … s</span>
+                            </div>
+                            <div class="dual-range" id="dr-dl-sum">
+                                <div class="track">
+                                    <div class="track-fill" id="dr-dl-sum-fill"></div>
+                                </div>
+                                <input type="range" id="dr-dl-sum-lo" min="0" max="1000" value="0" step="1">
+                                <input type="range" id="dr-dl-sum-hi" min="0" max="1000" value="1000" step="1">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="dl-info"
@@ -3367,12 +3393,8 @@ on a Python script which was made by Copilot AI.
 
         function dlGenerateSamples() {
             const p = dlGetParams();
-            // Use a reduced sample rate for plotting (not full 16384)
-            // Enough to represent the waveforms accurately for display + CSV
-            // We pick enough pts to have ~20 pts per cycle of the higher freq
             const maxFreq = Math.max(p.f1, p.f2, p.f2in || 0);
-            // For CSV: cap at 5000 pts total for practicality; for plot: also 5000
-            const nPts = p.totalDur * 100000;
+            const nPts = p.totalDur * FS;
             const dt = p.totalDur / (nPts - 1);
             const t = new Float64Array(nPts);
             const i1 = new Float64Array(nPts);
@@ -3435,7 +3457,12 @@ on a Python script which was made by Copilot AI.
             return { t, i1, i2, sum, env, nPts, p };
         }
 
-        function dlDrawSnapshotCanvas(cv, series, tArr, nPts, totalDur, yLabel) {
+        function dlDrawSnapshotCanvas(cv, series, tArr, nPts, totalDur, yLabel, tLo, tHi) {
+            // tLo / tHi allow zooming the time axis; default to full range
+            if (tLo === undefined || tLo === null) tLo = 0;
+            if (tHi === undefined || tHi === null) tHi = totalDur;
+            const tSpan = tHi - tLo || totalDur;
+
             const W = cv.offsetWidth || cv.width;
             const H = cv.offsetHeight || cv.height;
             // Set actual pixel dimensions (handle DPR for sharpness)
@@ -3450,10 +3477,15 @@ on a Python script which was made by Copilot AI.
             ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, W, H);
             ctx.fillStyle = COL.bg; ctx.fillRect(P.l, P.t, PW, PH);
 
-            // Y range
+            // Determine which sample indices fall within [tLo, tHi]
+            const dt = totalDur / (nPts - 1);
+            const iLo = Math.max(0, Math.floor(tLo / dt));
+            const iHi = Math.min(nPts - 1, Math.ceil(tHi / dt));
+
+            // Y range — computed only over visible window
             let yMin = Infinity, yMax = -Infinity;
             for (const s of series) {
-                for (let i = 0; i < s.data.length; i++) {
+                for (let i = iLo; i <= iHi; i++) {
                     if (s.data[i] < yMin) yMin = s.data[i];
                     if (s.data[i] > yMax) yMax = s.data[i];
                 }
@@ -3462,7 +3494,7 @@ on a Python script which was made by Copilot AI.
             const pad = (yMax - yMin) * 0.1 || 0.1;
             yMin -= pad; yMax += pad;
 
-            const toX = v => P.l + (v / totalDur) * PW;
+            const toX = v => P.l + ((v - tLo) / tSpan) * PW;
             const toY = v => P.t + PH - (v - yMin) / (yMax - yMin) * PH;
 
             // Grid
@@ -3475,11 +3507,11 @@ on a Python script which was made by Copilot AI.
                 ctx.fillText(v.toFixed(2), P.l - 4, y);
             }
             for (let i = 0; i <= 5; i++) {
-                const v = totalDur * i / 5, x = toX(v);
+                const v = tLo + tSpan * i / 5, x = toX(v);
                 ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
                 ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, P.t + PH); ctx.stroke();
                 ctx.fillStyle = COL.text; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-                ctx.fillText(v.toFixed(1) + 's', x, P.t + PH + 4);
+                ctx.fillText(v.toFixed(2) + 's', x, P.t + PH + 4);
             }
             ctx.strokeStyle = COL.axis; ctx.lineWidth = 1;
             ctx.strokeRect(P.l, P.t, PW, PH);
@@ -3496,8 +3528,9 @@ on a Python script which was made by Copilot AI.
             const ramp = parseFloat($('dl-ramp').value) || 1;
             const stim = parseFloat($('dl-stim').value) || 10;
             ctx.fillStyle = 'rgba(255,255,255,0.025)';
-            ctx.fillRect(P.l, P.t, toX(ramp) - P.l, PH);
-            ctx.fillRect(toX(ramp + stim), P.t, toX(totalDur) - toX(ramp + stim), PH);
+            const xRampEnd = toX(ramp), xStimEnd = toX(ramp + stim), xTotal = toX(totalDur);
+            ctx.fillRect(P.l, P.t, Math.max(0, xRampEnd - P.l), PH);
+            ctx.fillRect(Math.max(P.l, xStimEnd), P.t, Math.max(0, xTotal - Math.max(P.l, xStimEnd)), PH);
 
             // Series — peak-min rendering to avoid aliasing when many samples map to few pixels
             ctx.save(); ctx.beginPath(); ctx.rect(P.l, P.t, PW, PH); ctx.clip();
@@ -3505,12 +3538,12 @@ on a Python script which was made by Copilot AI.
             for (const s of series) {
                 ctx.strokeStyle = s.color; ctx.lineWidth = s.width || 1.5;
                 ctx.setLineDash(s.dash || []);
-                // Build per-pixel-column min/max arrays
+                // Build per-pixel-column min/max arrays — only over visible window
                 const mn = new Float64Array(cols).fill(Infinity);
                 const mx = new Float64Array(cols).fill(-Infinity);
-                const scale = (cols - 1) / (nPts - 1);
-                for (let i = 0; i < nPts; i++) {
-                    const px = Math.round(i * scale);
+                const scale = (cols - 1) / Math.max(1, iHi - iLo);
+                for (let i = iLo; i <= iHi; i++) {
+                    const px = Math.round((i - iLo) * scale);
                     const v = s.data[i];
                     if (v < mn[px]) mn[px] = v;
                     if (v > mx[px]) mx[px] = v;
@@ -3529,22 +3562,71 @@ on a Python script which was made by Copilot AI.
             ctx.restore();
         }
 
-        function dlRenderPlots() {
-            const { t, i1, i2, sum, env, nPts, p } = dlGenerateSamples();
-            const totalDur = p.totalDur;
+        /* ── dl-modal time-range state ── */
+        let dlTimeRangeI1I2 = [0, 1];   // normalised [0..1]
+        let dlTimeRangeSum = [0, 1];
 
-            // I1 + I2 superimposed
+        function dlSetupTimeSliders(totalDur) {
+            // Update slider labels and fill for both plots; clamp values if duration changed
+            function initDr(idLo, idHi, fillId, labelId, getRange, setRange) {
+                const lo = $(idLo), hi = $(idHi), fill = $(fillId), lbl = $(labelId);
+                // Reset to full range whenever duration changes
+                lo.value = 0; hi.value = 1000;
+                setRange([0, 1]);
+
+                function update() {
+                    let vLo = parseInt(lo.value), vHi = parseInt(hi.value);
+                    if (vLo >= vHi - 10) {
+                        if (document.activeElement === lo) vLo = vHi - 10;
+                        else vHi = vLo + 10;
+                        lo.value = vLo; hi.value = vHi;
+                    }
+                    const pLo = vLo / 1000, pHi = vHi / 1000;
+                    fill.style.left = (pLo * 100) + '%';
+                    fill.style.width = ((pHi - pLo) * 100) + '%';
+                    const tLo = pLo * totalDur, tHi = pHi * totalDur;
+                    lbl.textContent = tLo.toFixed(2) + ' – ' + tHi.toFixed(2) + ' s';
+                    setRange([pLo, pHi]);
+                    dlRenderPlotsZoomed();
+                }
+                lo.addEventListener('input', update);
+                hi.addEventListener('input', update);
+                update(); // init fill + label
+            }
+
+            initDr('dr-dl-i1i2-lo', 'dr-dl-i1i2-hi', 'dr-dl-i1i2-fill', 'dl-sv-i1i2',
+                () => dlTimeRangeI1I2, r => dlTimeRangeI1I2 = r);
+            initDr('dr-dl-sum-lo', 'dr-dl-sum-hi', 'dr-dl-sum-fill', 'dl-sv-sum',
+                () => dlTimeRangeSum, r => dlTimeRangeSum = r);
+        }
+
+        // Cache last generated samples so slider moves don't regenerate
+        let _dlLastSamples = null;
+
+        function dlRenderPlotsZoomed() {
+            if (!_dlLastSamples) return;
+            const { t, i1, i2, sum, env, nPts, p } = _dlLastSamples;
+            const totalDur = p.totalDur;
             const cv1 = $('dl-cv-i1i2');
             dlDrawSnapshotCanvas(cv1,
                 [{ data: i1, color: '#ff6b6b', width: 1.2 },
                 { data: i2, color: '#4fc3f7', width: 1.2 }],
-                t, nPts, totalDur, 'mA');
-
-            // Sum
+                t, nPts, totalDur, 'mA',
+                dlTimeRangeI1I2[0] * totalDur, dlTimeRangeI1I2[1] * totalDur);
             const cv3 = $('dl-cv-sum');
             dlDrawSnapshotCanvas(cv3,
                 [{ data: sum, color: '#69db7c', width: 1.2 }, { data: env, color: '#cc5de8', width: 1.5 }],
-                t, nPts, totalDur, 'mA');
+                t, nPts, totalDur, 'mA',
+                dlTimeRangeSum[0] * totalDur, dlTimeRangeSum[1] * totalDur);
+        }
+
+        function dlRenderPlots() {
+            _dlLastSamples = dlGenerateSamples();
+            const { t, i1, i2, sum, env, nPts, p } = _dlLastSamples;
+            const totalDur = p.totalDur;
+
+            // Re-initialise the sliders for the new duration (resets zoom to full range)
+            dlSetupTimeSliders(totalDur);
 
             // Info
             $('dl-info').textContent = `Total duration: ${totalDur.toFixed(2)} s  ·  Ramp: ${p.ramp.toFixed(2)} s  ·  Stim: ${p.stim.toFixed(2)} s  ·  ${nPts} sample points`;
