@@ -1463,8 +1463,8 @@ on a Python script which was made by Copilot AI.
                         </div>
                         <div class="srow">
                             <div class="shdr"><span class="sname">Threshold</span><span class="sval"
-                                    id="fd-sv-thresh">50%</span></div>
-                            <input type="range" id="fd-thresh" min="0.1" max="0.9" step="0.05" value="0.5">
+                                    id="fd-sv-thresh">80%</span></div>
+                            <input type="range" id="fd-thresh" min="0.1" max="0.9" step="0.05" value="0.8">
                         </div>
                     </div>
 
@@ -1614,8 +1614,8 @@ on a Python script which was made by Copilot AI.
            R_common = shared return-path resistance causing crosstalk (Ω)
         ════════════════════════════════════════════════════════ */
         const HBRIDGE = {
-            R_self: 2200,   // Ω — total load resistance per channel
-            R_common: 200,   // Ω — common resistance (crosstalk / AM coupling)
+            R_self: 2187,   // Ω — total load resistance per channel
+            R_common: 187,   // Ω — common resistance (crosstalk / AM coupling)
         };
 
         /* ── Probe mode: 'current' | 'voltage' ── */
@@ -1776,7 +1776,7 @@ on a Python script which was made by Copilot AI.
         /* ════════════════════════════════════════════════════════
            CANVAS PLOT ENGINE
         ════════════════════════════════════════════════════════ */
-        const COL = { bg: '#1a1e2a', grid: '#1e2230', axis: '#606880', text: '#606880' };
+        const COL = { bg: '#1a1e2a', grid: '#1e2230', axis: '#606880', text: '#c5cad9' };
 
         function drawPlot(cv, series, xRange, yRange, logX, xLabel, yLabel, logY) {
             const cell = cv.parentElement;
@@ -2289,8 +2289,8 @@ on a Python script which was made by Copilot AI.
                     if (tiMode === 'normal') {
                         y1[i] = c1r; y2[i] = c2r; ys[i] = sr + (nlv / 100) * sr * sr; ye[i] = env;
                     } else if (tiMode === 'pwm') {
-                        const sq1 = (Math.sign(c1r) * .5 + .5) * a1v, sq2 = (Math.sign(c2r) * .5 + .5) * a2v;
-                        y1[i] = sq1; y2[i] = sq2; ys[i] = sq1 * sq2;
+                        const sq1 = (Math.sign(c1r)) * a1v, sq2 = (Math.sign(c2r)) * a2v;
+                        y1[i] = sq1; y2[i] = sq2; ys[i] = sq1 + sq2;
                         ye[i] = (a1v + a2v) * Math.cos(phi1 - phi2);
                     } else {
                         // FSK: both waves displayed, wave 2 has switched frequency
@@ -3172,7 +3172,7 @@ on a Python script which was made by Copilot AI.
                 const y = pad.t + g * ph / 4;
                 ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.stroke();
                 const v = (ymax - g * 2 * ymax / 4).toExponential(1);
-                ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'right';
+                ctx.fillStyle = '#c5cad9'; ctx.font = '9px "IBM Plex Mono",monospace'; ctx.textAlign = 'right';
                 ctx.fillText(v, pad.l - 3, y + 3);
             }
             ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'center';
@@ -3192,7 +3192,7 @@ on a Python script which was made by Copilot AI.
             for (let g = 0; g <= 3; g++) {
                 const y = pad.t + g * ph / 3;
                 ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.stroke();
-                ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'right';
+                ctx.fillStyle = '#c5cad9'; ctx.font = '9px "IBM Plex Mono",monospace'; ctx.textAlign = 'right';
                 ctx.fillText((amax * (1 - g / 3)).toExponential(1), pad.l - 3, y + 3);
             }
             ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'center';
