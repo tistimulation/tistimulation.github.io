@@ -1009,11 +1009,16 @@ on a Python script which was made by Copilot AI.
                         </div>
                         <div class="frow"><span class="flabel">PRF (Hz)</span><input class="finput" id="prf" value="10">
                         </div>
-                        <div class="frow"><span class="flabel">Pulse Duration (ms)</span><input class="finput" id="pw"
+                        <div class="frow"><span class="flabel">Δf Duration (ms)</span><input class="finput" id="pw"
                                 value="10"></div>
                         <div class="frow" id="fsk-npulses-row">
                             <span class="flabel">Number of Pulses</span>
                             <span id="fsk-npulses"
+                                style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);width:70px;text-align:right;display:inline-block">—</span>
+                        </div>
+                        <div class="frow" id="fsk-pwidth-row">
+                            <span class="flabel">Pulse Width (ms)</span>
+                            <span id="fsk-pwidth"
                                 style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);width:70px;text-align:right;display:inline-block">—</span>
                         </div>
                     </div>
@@ -2291,7 +2296,7 @@ on a Python script which was made by Copilot AI.
                     } else if (tiMode === 'pwm') {
                         const sq1 = (Math.sign(c1r)) * a1v, sq2 = (Math.sign(c2r)) * a2v;
                         y1[i] = sq1; y2[i] = sq2; ys[i] = sq1 + sq2;
-                        ye[i] = (a1v + a2v) * Math.cos(phi1 - phi2);
+                        ye[i] = (a1v + a2v);
                     } else {
                         // FSK: both waves displayed, wave 2 has switched frequency
                         y1[i] = c1r; y2[i] = c2r;
@@ -2674,13 +2679,16 @@ on a Python script which was made by Copilot AI.
             const pwMs = fv('pw', 10);
             const diffFreq = Math.abs(f2in - f2out);
             const el = $('fsk-npulses');
+            const elpw = $('fsk-pwidth');
             if (diffFreq === 0) {
-                el.textContent = '∞';
+                el.textContent = '1';
+                elpw.textContent = '∞';
             } else {
                 const diffPeriod = 1 / diffFreq;          // seconds
                 const pulseDur = pwMs / 1000;            // seconds
                 const nPulses = pulseDur / diffPeriod;  // = pulseDur * diffFreq
                 el.textContent = nPulses.toFixed(2);
+                elpw.textContent = (diffPeriod * 1000).toFixed(2);
             }
         }
 
