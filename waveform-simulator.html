@@ -1003,26 +1003,6 @@ on a Python script which was made by Copilot AI.
                         </div>
                     </div>
 
-                    <div class="card" id="fsk-card" style="display:none; border-color:#fff52f">
-                        <div class="card-title" style="color:#fff52f;border-color:rgba(254, 174, 0, 0.25)">FSK
-                            Parameters
-                        </div>
-                        <div class="frow"><span class="flabel">PRF (Hz)</span><input class="finput" id="prf" value="10">
-                        </div>
-                        <div class="frow"><span class="flabel">Δf Duration (ms)</span><input class="finput" id="pw"
-                                value="10"></div>
-                        <div class="frow" id="fsk-npulses-row">
-                            <span class="flabel">Number of Pulses</span>
-                            <span id="fsk-npulses"
-                                style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);width:70px;text-align:right;display:inline-block">—</span>
-                        </div>
-                        <div class="frow" id="fsk-pwidth-row">
-                            <span class="flabel">Pulse Width (ms)</span>
-                            <span id="fsk-pwidth"
-                                style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);width:70px;text-align:right;display:inline-block">—</span>
-                        </div>
-                    </div>
-
                     <div class="card" style="border-color:#ff6b6b">
                         <div class="card-title" style="color:#ff6b6b;border-color:rgba(255,107,107,0.25)">I1 Parameters
                         </div>
@@ -1051,6 +1031,11 @@ on a Python script which was made by Copilot AI.
                         <div class="frow" id="fsk-f2in-row" style="display:none"><span class="flabel"
                                 style="color:#fff52f">Freq 2 inside
                                 pulse (Hz)</span><input class="finput" id="f2in" value="2100"></div>
+                        <div class="frow" id="fsk-pwidth-row" style="display:none">
+                            <span class="flabel" style="color:#fff52f">Pulse Width (ms)</span>
+                            <span id="fsk-pwidth"
+                                style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);width:70px;text-align:right;display:inline-block">—</span>
+                        </div>
                         <div class="frow"><span class="flabel">Phase 2 (°)</span><input class="finput" id="ph2"
                                 value="180"></div>
                         <div class="srow">
@@ -1067,6 +1052,22 @@ on a Python script which was made by Copilot AI.
                     </div>
                     <!-- Nonlinearity input removed from UI; nl is fixed at 0 below -->
                     <input type="hidden" id="nl" value="0.0">
+
+                    <div class="card" id="fsk-card" style="display:none; border-color:#fff52f">
+                        <div class="card-title" style="color:#fff52f;border-color:rgba(254, 174, 0, 0.25)">Pulse
+                            Parameters
+                        </div>
+                        <div class="frow"><span class="flabel">Pulse Repetition Frequency - PRF (Hz)</span><input
+                                class="finput" id="prf" value="10">
+                        </div>
+                        <div class="frow"><span class="flabel">Number of Pulses</span><input class="finput" id="pw"
+                                value="1"></div>
+                        <!-- <div class="frow" id="fsk-npulses-row">
+                            <span class="flabel">Number of Pulses</span>
+                            <span id="fsk-npulses"
+                                style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);width:70px;text-align:right;display:inline-block">—</span>
+                        </div> -->
+                    </div>
 
                     <div class="card">
                         <div class="card-title">Playback</div>
@@ -2245,7 +2246,9 @@ on a Python script which was made by Copilot AI.
                 const f1v = fv('f1', 2000), f2v = fv('f2', 2010), f2inv = fv('f2in', 2100);
                 const a1v = fv('a1', 1), a2v = fv('a2', 1), nlv = fv('nl', 0);
                 const ph1v = fv('ph1', 0) * Math.PI / 180, ph2v = fv('ph2', 90) * Math.PI / 180;
-                const prfv = fv('prf', 10), pwv = fv('pw', 10) / 1000;
+                const diffFreq = Math.abs(f2inv - f2v);
+                const diffPeriod = 1 / diffFreq;
+                const prfv = fv('prf', 10), pwv = fv('pw', 1) * diffPeriod;
                 // Convert PRF and pulse width to exact integer sample counts.
                 // All FSK gating is done in the sample domain so there is zero
                 // fractional-sample error and no pulse-to-pulse phase accumulation.
@@ -2668,6 +2671,7 @@ on a Python script which was made by Copilot AI.
         function applyFskUiState(entering) {
             // Toggle the extra "inside pulse" row
             $('fsk-f2in-row').style.display = entering ? '' : 'none';
+            $('fsk-pwidth-row').style.display = entering ? '' : 'none';
             // Rename the f2 label
             $('f2-label').textContent = entering ? 'Freq 2 outside pulse (Hz)' : 'Frequency 2 (Hz)';
         }
@@ -2676,18 +2680,18 @@ on a Python script which was made by Copilot AI.
             if (tiMode !== 'fsk') return;
             const f2out = fv('f2', 2000);
             const f2in = fv('f2in', 2100);
-            const pwMs = fv('pw', 10);
+            const pwMs = fv('pw', 1);
             const diffFreq = Math.abs(f2in - f2out);
-            const el = $('fsk-npulses');
+            // const el = $('fsk-npulses');
             const elpw = $('fsk-pwidth');
             if (diffFreq === 0) {
-                el.textContent = '1';
+                // el.textContent = '1';
                 elpw.textContent = '∞';
             } else {
                 const diffPeriod = 1 / diffFreq;          // seconds
-                const pulseDur = pwMs / 1000;            // seconds
+                const pulseDur = pwMs * diffPeriod;            // seconds
                 const nPulses = pulseDur / diffPeriod;  // = pulseDur * diffFreq
-                el.textContent = nPulses.toFixed(2);
+                // el.textContent = nPulses.toFixed(2);
                 elpw.textContent = (diffPeriod * 1000).toFixed(2);
             }
         }
@@ -3385,7 +3389,7 @@ on a Python script which was made by Copilot AI.
                 a1: fv('a1', 1), a2: fv('a2', 1),
                 ph1: fv('ph1', 0) * Math.PI / 180,
                 ph2: fv('ph2', 180) * Math.PI / 180,
-                prf: fv('prf', 10), pw: fv('pw', 10) / 1000,
+                prf: fv('prf', 10), pw: fv('pw', 1),
                 mode: tiMode,
                 i1Active: $('i1-active').value, i1Return: $('i1-return').value,
                 i2Active: $('i2-active').value, i2Return: $('i2-return').value
@@ -3409,9 +3413,11 @@ on a Python script which was made by Copilot AI.
             const i2 = new Float64Array(nPts);
             const sum = new Float64Array(nPts);
             const env = new Float64Array(nPts);
+            const diffFreq = Math.abs(p.f2in - p.f2);
+            const diffPeriod = 1 / diffFreq;
 
             const fskPeriod = p.prf > 0 ? 1 / p.prf : 1;
-            const fskPW = p.pw;
+            const fskPW = p.pw * diffPeriod;
 
             let phi2PulseEndAccum = 0;
             let lastInPulse = 0;
@@ -3673,7 +3679,7 @@ on a Python script which was made by Copilot AI.
             if (p.mode === 'fsk') {
                 rows.push('# --- FSK Parameters ---');
                 rows.push('PRF_Hz,' + p.prf);
-                rows.push('Pulse_Duration_ms,' + fv('pw', 10));
+                rows.push('Num_Pulses,' + fv('pw', 1));
                 rows.push('#');
             }
             rows.push('# --- Recording Parameters ---');
