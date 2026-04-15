@@ -1099,7 +1099,7 @@ on a Python script which was made by Copilot AI.
                                 <div class="leg-line" style="background:var(--b)"></div>Waveform 2 (Right)
                             </div>
                             <div class="leg-item">
-                                <div class="leg-line" style="background:var(--g)"></div>Sum
+                                <div class="leg-line" style="background:var(--g)"></div>Current Sum
                             </div>
                             <div class="leg-item">
                                 <div class="leg-dash" style="border-color:var(--p)"></div>Envelope
@@ -1289,7 +1289,7 @@ on a Python script which was made by Copilot AI.
                         <!-- Sum time domain (green + purple envelope) -->
                         <div class="plot-wrap">
                             <div class="plot-hdr">
-                                <span class="dot" style="background:var(--g)"></span>Sum
+                                <span class="dot" style="background:var(--g)"></span>Current Sum
                                 <span class="sep">&amp;</span>
                                 <span class="dot" style="background:var(--p)"></span>Env · Time
                             </div>
@@ -1305,7 +1305,7 @@ on a Python script which was made by Copilot AI.
                         <!-- Sum frequency domain (green) -->
                         <div class="plot-wrap">
                             <div class="plot-hdr">
-                                <span class="dot" style="background:var(--g)"></span>Sum · FFT
+                                <span class="dot" style="background:var(--g)"></span>Current Sum · FFT
                             </div>
                             <div class="canvas-cell"><canvas id="cv-fs"></canvas></div>
                             <div class="plot-strip">
@@ -1385,8 +1385,8 @@ on a Python script which was made by Copilot AI.
                         style="grid-column:1/-1;background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden">
                         <div
                             style="padding:5px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:center">
-                            <span>Sum (I1+I2) &amp; Envelope · Full Recording</span>
-                            <span style="color:#69db7c">━ Sum</span>
+                            <span>Current Sum (I1+I2) &amp; Envelope · Full Recording</span>
+                            <span style="color:#69db7c">━ Current Sum</span>
                             <span style="color:#cc5de8">━ Env</span>
                         </div>
                         <canvas id="dl-cv-sum" style="display:block;width:100%;height:200px"></canvas>
@@ -3276,7 +3276,7 @@ on a Python script which was made by Copilot AI.
             const M_amp_sum = M_amp1 + M_amp2;
             const modal = $('fd-waveModal');
             $('fd-waveTitle').textContent = `TI envelope  ·  x=${wx.toFixed(4)}m  y=${wy.toFixed(4)}m`;
-            $('fd-eqTime').textContent = `y = ${M_ampdF.toExponential(3)} · sin(2π · ${df} · t)  [modulation envelope]`;
+            $('fd-eqTime').textContent = `Envelope amplitude = ${M_ampdF.toExponential(3)}  `;
             $('fd-eqFreq').textContent = `Envelope spike at Δf = ${df} Hz  |  M = ${M_ampdF.toExponential(3)} V/m`;
             modal.classList.add('open');
             const cvW = $('fd-cvWave');
