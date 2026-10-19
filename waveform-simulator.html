@@ -576,6 +576,10 @@ on a Python script which was made by Copilot AI.
             color: var(--head);
         }
 
+        select.finput option:disabled {
+            color: var(--dim);
+        }
+
         /* ── Diagram SVG element styles ── */
         .diag-head-circle {
             fill: none;
@@ -1602,17 +1606,87 @@ on a Python script which was made by Copilot AI.
 
         /* ════════════════════════════════════════════════════════
            H-BRIDGE LOAD MODEL
-           Hardcoded for now; structured for future UI integration.
-           V1 = R_self * I1_A + R_common * I2_A
-           V2 = R_self * I2_A + R_common * I1_A
+           V1 = R_self1 * I1_A + R_cross1 * I2_A
+           V2 = R_self2 * I2_A + R_cross2 * I1_A
            where currents I1_A, I2_A are in Amps (mA ÷ 1000).
-           R_self   = total resistance seen by each source (Ω)
-           R_common = shared return-path resistance causing crosstalk (Ω)
+
+           Resistances come from the selected electrodes, using their
+           positions in the diagram's SVG coordinates (so they don't
+           depend on screen size):
+           • R_selfX grows with the distance d between IX's active and
+             return electrodes: R_MIN at the closest possible pair, R_MAX
+             at the farthest, along R = R_MIN + (R_MAX − R_MIN)·t^γ with
+             t = (d − dMin)/(dMax − dMin). γ is chosen so the default pair
+             (FC3–CP3 / FC4–CP4) gives exactly R_SELF_DEFAULT.
+           • R_crossX depends on L3, the distance between the midpoints of
+             the two electrode pairs, and on θ, the angle between line1
+             (I1 active→return) and line2 (I2 active→return):
+             R_cross = R_self·(1 − L3/L3max)^k·|cos θ|.
+             The distance term equals 1 when L3 = 0 and falls to 0 at the
+             largest possible L3. The angle term is 1 for parallel lines and
+             0 for perpendicular ones (lines are undirected, so θ ≤ 90°).
+             k is chosen so the default pairs (which are parallel) give
+             exactly R_CROSS_DEFAULT.
         ════════════════════════════════════════════════════════ */
         const HBRIDGE = {
-            R_self: 2187,   // Ω — total load resistance per channel
-            R_common: 187,   // Ω — common resistance (crosstalk / AM coupling)
+            R_MIN: 500,            // Ω — self-resistance of the closest possible pair
+            R_MAX: 4000,           // Ω — self-resistance of the farthest possible pair
+            R_SELF_DEFAULT: 2187,  // Ω — self-resistance of the default pairs
+            R_CROSS_DEFAULT: 187,  // Ω — cross-resistance of the default pairs
+            DEFAULT_I1: ['FC3', 'CP3'],
+            DEFAULT_I2: ['FC4', 'CP4'],
         };
+
+        // Geometry constants over all electrode choices; computed once on first use
+        // (ELECTRODE_POSITIONS is defined further down the script).
+        let hbridgeGeom = null;
+        function getHbridgeGeom() {
+            if (hbridgeGeom) return hbridgeGeom;
+            const pts = ELECTRODE_LABELS.map(getElecPos);
+            const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+            const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+            let dMin = Infinity, dMax = 0;
+            const mids = new Map();
+            for (let i = 0; i < pts.length; i++) {
+                for (let j = i + 1; j < pts.length; j++) {
+                    const d = dist(pts[i], pts[j]);
+                    if (d > 0 && d < dMin) dMin = d;
+                    if (d > dMax) dMax = d;
+                    const m = mid(pts[i], pts[j]);
+                    mids.set(m[0] + ',' + m[1], m);
+                }
+            }
+            const M = [...mids.values()];
+            let L3max = 0;
+            for (let i = 0; i < M.length; i++)
+                for (let j = i + 1; j < M.length; j++) L3max = Math.max(L3max, dist(M[i], M[j]));
+
+            const [a1, r1] = HBRIDGE.DEFAULT_I1.map(getElecPos), [a2, r2] = HBRIDGE.DEFAULT_I2.map(getElecPos);
+            const tDef = (dist(a1, r1) - dMin) / (dMax - dMin);
+            const gamma = Math.log((HBRIDGE.R_SELF_DEFAULT - HBRIDGE.R_MIN) / (HBRIDGE.R_MAX - HBRIDGE.R_MIN)) / Math.log(tDef);
+            const uDef = dist(mid(a1, r1), mid(a2, r2)) / L3max;
+            const k = Math.log(HBRIDGE.R_CROSS_DEFAULT / HBRIDGE.R_SELF_DEFAULT) / Math.log(1 - uDef);
+            hbridgeGeom = { dist, mid, dMin, dMax, L3max, gamma, k };
+            return hbridgeGeom;
+        }
+
+        // Current self- and cross-resistances (Ω) for both channels, from the selected electrodes
+        function getLoadResistances() {
+            const g = getHbridgeGeom();
+            const [a1, r1, a2, r2] = ['i1-active', 'i1-return', 'i2-active', 'i2-return'].map(id => getElecPos($(id).value));
+            const selfR = (a, r) => {
+                const t = Math.min(1, Math.max(0, (g.dist(a, r) - g.dMin) / (g.dMax - g.dMin)));
+                return HBRIDGE.R_MIN + (HBRIDGE.R_MAX - HBRIDGE.R_MIN) * Math.pow(t, g.gamma);
+            };
+            const u = Math.min(1, g.dist(g.mid(a1, r1), g.mid(a2, r2)) / g.L3max);
+            // |cos θ| between line1 and line2 = |unit1 · unit2|
+            const v1 = [r1[0] - a1[0], r1[1] - a1[1]], v2 = [r2[0] - a2[0], r2[1] - a2[1]];
+            const len = Math.hypot(...v1) * Math.hypot(...v2);
+            const cosTheta = len > 0 ? Math.abs(v1[0] * v2[0] + v1[1] * v2[1]) / len : 0;
+            const crossFrac = Math.pow(1 - u, g.k) * cosTheta;
+            const R_self1 = selfR(a1, r1), R_self2 = selfR(a2, r2);
+            return { R_self1, R_self2, R_cross1: R_self1 * crossFrac, R_cross2: R_self2 * crossFrac };
+        }
 
         /* ── Probe mode: 'current' | 'voltage' ── */
         let probeMode = 'current';
@@ -2386,8 +2460,7 @@ on a Python script which was made by Copilot AI.
             const d1 = decimate(lastNAt(buf1, NLx, dispHead), 800);
             const d2 = decimate(lastNAt(buf2, NLx, dispHead), 800);
             // ── Probe: derive display data for wing plots ──
-            // In voltage mode: scale mA→A then apply H-bridge resistive model.
-            // The HBRIDGE config object is kept separate for easy future UI wiring.
+            // In voltage mode: scale mA→A then apply the H-bridge resistive model.
             const a1v = fv('a1', 1), a2v = fv('a2', 1);
             let disp1, disp2, wingYLabel, wingTimeRange;
             let wingYRange1 = null, wingYRange2 = null, wingYStep1, wingYStep2;
@@ -2398,15 +2471,15 @@ on a Python script which was made by Copilot AI.
                 const NVx = Math.min(NV + 1, BUFLEN);
                 const raw1v = decimate(lastNAt(buf1, NVx, dispHead), 800);
                 const raw2v = decimate(lastNAt(buf2, NVx, dispHead), 800);
-                // Convert mA → A, then V = R_self*I_own + R_common*I_other
-                const { R_self, R_common } = HBRIDGE;
+                // Convert mA → A, then V = R_self*I_own + R_cross*I_other
+                const { R_self1, R_self2, R_cross1, R_cross2 } = getLoadResistances();
                 disp1 = new Float32Array(raw1v.length);
                 disp2 = new Float32Array(raw2v.length);
                 for (let i = 0; i < raw1v.length; i++) {
                     const i1A = raw1v[i] / 1000;
                     const i2A = raw2v[i] / 1000;
-                    disp1[i] = R_self * i1A + R_common * i2A;
-                    disp2[i] = R_self * i2A + R_common * i1A;
+                    disp1[i] = R_self1 * i1A + R_cross1 * i2A;
+                    disp2[i] = R_self2 * i2A + R_cross2 * i1A;
                 }
                 wingYLabel = 'V';
                 wingTimeRange = [0, winVms / 1000];
@@ -2515,19 +2588,19 @@ on a Python script which was made by Copilot AI.
                 let fft1_disp, fft2_disp, wingFftYLabel, wingFftYtop;
                 if (probeMode === 'voltage') {
                     // Transform FFT magnitudes: mag is in mA, convert to V via H-bridge.
-                    // For a linear system: V1_mag ≈ R_self*|I1|/1000 + R_common*|I2|/1000
+                    // For a linear system: V1_mag ≈ R_self1*|I1|/1000 + R_cross1*|I2|/1000
                     // (superposition; valid since model is linear)
-                    const { R_self, R_common } = HBRIDGE;
+                    const { R_self1, R_self2, R_cross1, R_cross2 } = getLoadResistances();
                     fft1_disp = new Float32Array(lenFull);
                     fft2_disp = new Float32Array(lenFull);
                     for (let i = 0; i < lenFull; i++) {
-                        fft1_disp[i] = R_self * fn1[i] / 1000 + R_common * fn2[i] / 1000;
-                        fft2_disp[i] = R_self * fn2[i] / 1000 + R_common * fn1[i] / 1000;
+                        fft1_disp[i] = R_self1 * fn1[i] / 1000 + R_cross1 * fn2[i] / 1000;
+                        fft2_disp[i] = R_self2 * fn2[i] / 1000 + R_cross2 * fn1[i] / 1000;
                     }
                     const a1v_ = fv('a1', 1), a2v_ = fv('a2', 1);
                     wingFftYtop = Math.max(
-                        (R_self * Math.abs(a1v_) + R_common * Math.abs(a2v_)) / 1000,
-                        (R_self * Math.abs(a2v_) + R_common * Math.abs(a1v_)) / 1000
+                        (R_self1 * Math.abs(a1v_) + R_cross1 * Math.abs(a2v_)) / 1000,
+                        (R_self2 * Math.abs(a2v_) + R_cross2 * Math.abs(a1v_)) / 1000
                     ) * 1.4;
                     wingFftYLabel = 'V';
                 } else {
@@ -3926,11 +3999,23 @@ on a Python script which was made by Copilot AI.
                 sel.addEventListener('change', () => {
                     const role = id; // 'i1-active', etc.
                     updateDiagramElectrode(role, sel.value);
+                    blockSameElectrode();
                 });
             });
 
+            // A channel's active and return can't be the same electrode: disable each
+            // select's partner choice in its option list
+            function blockSameElectrode() {
+                ['i1', 'i2'].forEach(ch => {
+                    const act = $(ch + '-active'), ret = $(ch + '-return');
+                    for (const opt of act.options) opt.disabled = opt.value === ret.value;
+                    for (const opt of ret.options) opt.disabled = opt.value === act.value;
+                });
+            }
+
             // Set initial diagram positions
             selectIds.forEach(id => updateDiagramElectrode(id, $(id).value));
+            blockSameElectrode();
         })();
 
 
