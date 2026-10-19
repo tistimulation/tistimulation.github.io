@@ -299,27 +299,8 @@ on a Python script which was made by Copilot AI.
             transform: scale(1.25)
         }
 
-        .sval.greyed {
-            color: var(--dim);
-            transition: color .2s
-        }
-
         .sval {
             transition: color .2s
-        }
-
-        input[type=range].greyed::-webkit-slider-thumb {
-            background: var(--dim);
-            box-shadow: none
-        }
-
-        input[type=range].greyed::-moz-range-thumb {
-            background: var(--dim);
-            box-shadow: none
-        }
-
-        input[type=range].greyed {
-            opacity: 0.5
         }
 
         .fft-status {
@@ -1121,22 +1102,30 @@ on a Python script which was made by Copilot AI.
                             <div class="plot-wrap">
                                 <div class="plot-hdr">
                                     <span class="dot" style="background:var(--r)"></span><span id="hdr-tw-i1">I1 ·
-                                        Time</span>
+                                        Time (Waveform)</span>
                                 </div>
                                 <div class="canvas-cell"><canvas id="cv-tw-i1"></canvas></div>
-                                <div class="plot-strip">
+                                <div class="plot-strip" id="strip-winL">
                                     <div class="shdr">
                                         <span class="sname">Time Range</span>
                                         <span class="sval" id="sv-winL">10.0 ms</span>
                                     </div>
                                     <input type="range" id="sl-winL" min="1" max="10" step="0.1" value="10">
                                 </div>
+                                <!-- Voltage probe: mirrors the Current Sum time range slider (sl-winR) -->
+                                <div class="plot-strip" id="strip-winV" style="display:none">
+                                    <div class="shdr">
+                                        <span class="sname">Time Range</span>
+                                        <span class="sval" id="sv-winV">200 ms</span>
+                                    </div>
+                                    <input type="range" id="sl-winV" min="1" max="200" step="1" value="200">
+                                </div>
                             </div>
                             <!-- I1 Frequency Domain -->
                             <div class="plot-wrap">
                                 <div class="plot-hdr">
                                     <span class="dot" style="background:var(--r)"></span><span id="hdr-fw-i1">I1 ·
-                                        FFT</span>
+                                        FFT (Spectrum)</span>
                                 </div>
                                 <div class="canvas-cell"><canvas id="cv-fw-i1"></canvas></div>
                                 <div class="plot-strip">
@@ -1268,7 +1257,7 @@ on a Python script which was made by Copilot AI.
                             <div class="plot-wrap">
                                 <div class="plot-hdr">
                                     <span class="dot" style="background:var(--b)"></span><span id="hdr-tw-i2">I2 ·
-                                        Time</span>
+                                        Time (Waveform)</span>
                                 </div>
                                 <div class="canvas-cell"><canvas id="cv-tw-i2"></canvas></div>
                             </div>
@@ -1276,7 +1265,7 @@ on a Python script which was made by Copilot AI.
                             <div class="plot-wrap">
                                 <div class="plot-hdr">
                                     <span class="dot" style="background:var(--b)"></span><span id="hdr-fw-i2">I2 ·
-                                        FFT</span>
+                                        FFT (Spectrum)</span>
                                 </div>
                                 <div class="canvas-cell"><canvas id="cv-fw-i2"></canvas></div>
                             </div>
@@ -1291,7 +1280,7 @@ on a Python script which was made by Copilot AI.
                             <div class="plot-hdr">
                                 <span class="dot" style="background:var(--g)"></span>Current Sum
                                 <span class="sep">&amp;</span>
-                                <span class="dot" style="background:var(--p)"></span>Env · Time
+                                <span class="dot" style="background:var(--p)"></span>Env · Time (Waveform)
                             </div>
                             <div class="canvas-cell"><canvas id="cv-ts"></canvas></div>
                             <div class="plot-strip">
@@ -1305,7 +1294,7 @@ on a Python script which was made by Copilot AI.
                         <!-- Sum frequency domain (green) -->
                         <div class="plot-wrap">
                             <div class="plot-hdr">
-                                <span class="dot" style="background:var(--g)"></span>Current Sum · FFT
+                                <span class="dot" style="background:var(--g)"></span>Current Sum · FFT (Spectrum)
                             </div>
                             <div class="canvas-cell"><canvas id="cv-fs"></canvas></div>
                             <div class="plot-strip">
@@ -1571,6 +1560,7 @@ on a Python script which was made by Copilot AI.
         }
 
         function onTab2FreqChange() {
+            clampFreq('fd-f1'); clampFreq('fd-f2');
             const f1v = parseFloat($('fd-f1').value);
             const f2v = parseFloat($('fd-f2').value);
             if (!isNaN(f1v)) sharedParams.f1 = f1v;
@@ -1646,13 +1636,22 @@ on a Python script which was made by Copilot AI.
             const isV = probeMode === 'voltage';
             $('lbl-current').classList.toggle('active', !isV);
             $('lbl-voltage').classList.toggle('active', isV);
-            $('hdr-tw-i1').textContent = (isV ? 'V1' : 'I1') + ' · Time';
-            $('hdr-fw-i1').textContent = (isV ? 'V1' : 'I1') + ' · FFT';
-            $('hdr-tw-i2').textContent = (isV ? 'V2' : 'I2') + ' · Time';
-            $('hdr-fw-i2').textContent = (isV ? 'V2' : 'I2') + ' · FFT';
-            // Grey out the I1 time-range label and slider thumb in voltage mode
-            $('sv-winL').style.color = isV ? 'var(--dim)' : '';
-            $('sl-winL').classList.toggle('greyed', isV);
+            $('hdr-tw-i1').textContent = (isV ? 'V1' : 'I1') + ' · Time (Waveform)';
+            $('hdr-fw-i1').textContent = (isV ? 'V1' : 'I1') + ' · FFT (Spectrum)';
+            $('hdr-tw-i2').textContent = (isV ? 'V2' : 'I2') + ' · Time (Waveform)';
+            $('hdr-fw-i2').textContent = (isV ? 'V2' : 'I2') + ' · FFT (Spectrum)';
+            // In voltage mode the wings share the sum's time window, so swap the I1
+            // time-range slider for one mirrored to the Current Sum slider
+            $('strip-winL').style.display = isV ? 'none' : '';
+            $('strip-winV').style.display = isV ? '' : 'none';
+            syncVoltageWinSlider();
+        }
+
+        // Copy the Current Sum time-range slider's limits and value onto the voltage-mode wing slider
+        function syncVoltageWinSlider() {
+            const slR = $('sl-winR'), slV = $('sl-winV');
+            slV.min = slR.min; slV.max = slR.max; slV.step = slR.step; slV.value = slR.value;
+            $('sv-winV').textContent = parseFloat(slR.value).toFixed(0) + ' ms';
         }
 
         $('probe-toggle').addEventListener('change', function () {
@@ -1783,8 +1782,35 @@ on a Python script which was made by Copilot AI.
            CANVAS PLOT ENGINE
         ════════════════════════════════════════════════════════ */
         const COL = { bg: '#1a1e2a', grid: '#1e2230', axis: '#606880', text: '#c5cad9' };
+        const TICK_FONT = '11px "IBM Plex Mono",monospace';
+        const AXIS_FONT = '10px "IBM Plex Mono",monospace';
+        const PLOT_PAD = { l: 58, r: 12, t: 8, b: 34 };  // shared by drawPlot and drawFftMarkers
 
-        function drawPlot(cv, series, xRange, yRange, logX, xLabel, yLabel, logY) {
+        // Draws x-axis tick labels ([{ x, lbl }]): the first is left-aligned and the last
+        // right-aligned so they stay inside the plot edges. Inner labels that would overlap
+        // a neighbour are skipped, so narrow plots still show both ends of the axis.
+        function drawXTicks(ctx, ticks, y) {
+            const n = ticks.length;
+            const box = ticks.map((t, i) => {
+                const w = ctx.measureText(t.lbl).width;
+                const left = i === 0 ? t.x : i === n - 1 ? t.x - w : t.x - w / 2;
+                return { lbl: t.lbl, left, right: left + w };
+            });
+            const gap = 6;
+            const endLeft = n > 1 ? box[n - 1].left : Infinity;
+            ctx.textAlign = 'left';
+            let lastRight = -Infinity;
+            box.forEach((b, i) => {
+                const isEnd = i === 0 || i === n - 1;
+                if (!isEnd && (b.left < lastRight + gap || b.right > endLeft - gap)) return;
+                if (i === n - 1 && b.left < lastRight + gap && n > 1 && box[0].right + gap > b.left) return;
+                ctx.fillText(b.lbl, b.left, y);
+                lastRight = b.right;
+            });
+        }
+
+        // yStep (optional, linear Y only): draw Y ticks at multiples of this step instead of 4 equal divisions.
+        function drawPlot(cv, series, xRange, yRange, logX, xLabel, yLabel, logY, yStep) {
             const cell = cv.parentElement;
             const W = cell.clientWidth, H = cell.clientHeight;
             if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
@@ -1792,7 +1818,7 @@ on a Python script which was made by Copilot AI.
             const ctx = cv.getContext('2d');
             ctx.clearRect(0, 0, W, H);
 
-            const P = { l: 44, r: 10, t: 8, b: 28 };
+            const P = PLOT_PAD;
             const PW = W - P.l - P.r, PH = H - P.t - P.b;
             if (PW < 10 || PH < 10) return;
 
@@ -1828,7 +1854,7 @@ on a Python script which was made by Copilot AI.
                 : v => P.t + PH - (v - yMin) / (yMax - yMin) * PH;
 
             // Y grid
-            ctx.font = '9px "IBM Plex Mono",monospace';
+            ctx.font = TICK_FONT;
             if (logY) {
                 // Draw one gridline per decade, plus ~3 minor lines between
                 const lo = Math.floor(lyMin), hi = Math.ceil(lyMax);
@@ -1849,12 +1875,18 @@ on a Python script which was made by Copilot AI.
                     }
                 }
             } else {
-                for (let i = 0; i <= 4; i++) {
-                    const v = yMin + (yMax - yMin) * i / 4, y = toY(v);
+                const yTicks = [];
+                if (yStep > 0) {
+                    for (let k = Math.ceil(yMin / yStep - 1e-9); k * yStep <= yMax + 1e-9; k++) yTicks.push(k * yStep);
+                } else {
+                    for (let i = 0; i <= 4; i++) yTicks.push(yMin + (yMax - yMin) * i / 4);
+                }
+                for (const v of yTicks) {
+                    const y = toY(v);
                     ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
                     ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(P.l + PW, y); ctx.stroke();
                     ctx.fillStyle = COL.text; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-                    ctx.fillText(v.toFixed(2), P.l - 4, y);
+                    ctx.fillText((Math.abs(v) < 1e-9 ? 0 : v).toFixed(2), P.l - 4, y);
                 }
             }
 
@@ -1872,7 +1904,7 @@ on a Python script which was made by Copilot AI.
                 const tickStart = Math.ceil(xMin / nice) * nice;
                 // Prevent label overlap: track last drawn x position
                 let lastDrawnX = -Infinity;
-                const minGap = 38; // px
+                const minGap = 46; // px
                 for (let v = tickStart; v <= xMax + 1e-9; v += nice) {
                     if (v < xMin) continue;
                     const x = toX(v);
@@ -1885,22 +1917,25 @@ on a Python script which was made by Copilot AI.
                     }
                 }
             } else {
+                const ticks = [];
                 for (let i = 0; i <= 5; i++) {
                     const v = xMin + (xMax - xMin) * i / 5, x = toX(v);
                     ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
                     ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, P.t + PH); ctx.stroke();
-                    const lbl = xMax < 0.1 ? (v * 1000).toFixed(2) : v.toFixed(3);
-                    ctx.fillText(lbl, x, P.t + PH + 4);
+                    ticks.push({ x, lbl: xMax < 0.1 ? (v * 1000).toFixed(2) : v.toFixed(3) });
                 }
+                drawXTicks(ctx, ticks, P.t + PH + 4);
             }
 
             ctx.strokeStyle = COL.axis; ctx.lineWidth = 1; ctx.strokeRect(P.l, P.t, PW, PH);
 
             // Axis labels
-            ctx.fillStyle = COL.axis; ctx.font = '9px "IBM Plex Mono",monospace';
+            ctx.fillStyle = COL.axis; ctx.font = AXIS_FONT;
             ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-            ctx.fillText(xLabel || '', P.l + PW / 2, H - 1);
-            ctx.save(); ctx.translate(10, P.t + PH / 2); ctx.rotate(-Math.PI / 2);
+            // Linear time axes under 0.1 s have their ticks labelled in ms (see X grid), so match the title
+            const xTitle = !logX && xMax < 0.1 && xLabel === 'Time (s)' ? 'Time (ms)' : xLabel;
+            ctx.fillText(xTitle || '', P.l + PW / 2, H - 1);
+            ctx.save(); ctx.translate(3, P.t + PH / 2); ctx.rotate(-Math.PI / 2);
             ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(yLabel || '', 0, 0); ctx.restore();
 
             // Series
@@ -1948,7 +1983,7 @@ on a Python script which was made by Copilot AI.
             if (W < 20 || H < 20) return;
             const ctx = cv.getContext('2d');
 
-            const P = { l: 44, r: 10, t: 8, b: 28 };
+            const P = PLOT_PAD;
             const PW = W - P.l - P.r, PH = H - P.t - P.b;
             if (PW < 10 || PH < 10) return;
 
@@ -2110,6 +2145,7 @@ on a Python script which was made by Copilot AI.
                 const slR = $('sl-winR');
                 slR.max = rMax; slR.value = rMax;
                 $('sv-winR').textContent = rMax.toFixed(0) + ' ms';
+                syncVoltageWinSlider();
             }
             setFftStatus('waiting', 0);
         }
@@ -2135,6 +2171,7 @@ on a Python script which was made by Copilot AI.
                 const slR = $('sl-winR'); slR.max = rMax;
                 if (parseFloat(slR.value) > rMax) slR.value = rMax;
                 $('sv-winR').textContent = parseFloat(slR.value).toFixed(0) + ' ms';
+                syncVoltageWinSlider();
             }
         }
 
@@ -2351,7 +2388,9 @@ on a Python script which was made by Copilot AI.
             // ── Probe: derive display data for wing plots ──
             // In voltage mode: scale mA→A then apply H-bridge resistive model.
             // The HBRIDGE config object is kept separate for easy future UI wiring.
+            const a1v = fv('a1', 1), a2v = fv('a2', 1);
             let disp1, disp2, wingYLabel, wingTimeRange;
+            let wingYRange1 = null, wingYRange2 = null, wingYStep1, wingYStep2;
             if (probeMode === 'voltage') {
                 // Use sum-style wide window so envelope beats are visible
                 const winVms = parseFloat($('sl-winR').value) || 200;
@@ -2376,28 +2415,31 @@ on a Python script which was made by Copilot AI.
                 disp2 = d2;
                 wingYLabel = 'mA';
                 wingTimeRange = [xStart, xEnd];
+                // Y ticks every 50% of each waveform's amplitude, with 20% headroom
+                const A1 = Math.abs(a1v), A2 = Math.abs(a2v);
+                if (A1 > 0) { wingYRange1 = [-A1 * 1.2, A1 * 1.2]; wingYStep1 = A1 / 2; }
+                if (A2 > 0) { wingYRange2 = [-A2 * 1.2, A2 * 1.2]; wingYStep2 = A2 / 2; }
             }
 
             // I1/V1 left wing: time domain
             drawPlot($('cv-tw-i1'),
                 [{ data: disp1, color: '#ff6b6b', width: 1.5, spline: isSine }],
-                wingTimeRange, null, false,
-                'Time (s)', wingYLabel);
+                wingTimeRange, wingYRange1, false,
+                'Time (s)', wingYLabel, false, wingYStep1);
 
             // I2/V2 right wing: time domain
             drawPlot($('cv-tw-i2'),
                 [{ data: disp2, color: '#4fc3f7', width: 1.5, spline: isSine }],
-                wingTimeRange, null, false,
-                'Time (s)', wingYLabel);
+                wingTimeRange, wingYRange2, false,
+                'Time (s)', wingYLabel, false, wingYStep2);
 
             // Right: sum + envelope, peak-min rendering
-            const a1v = fv('a1', 1), a2v = fv('a2', 1);
             const Asum = (Math.abs(a1v) + Math.abs(a2v)) * 1.2;
             const dSum = lastNAt(bufSum, NR, dispHead), dEnv = lastNAt(bufEnv, NR, dispHead);
             drawPlot($('cv-ts'),
                 [{ data: dSum, color: '#69db7c', width: 1.5, spline: isSine },
                 { data: dEnv, color: '#cc5de8', width: 1, spline: isSine }],
-                [0, winRms / 1000], [-Asum, Asum], false, 'Time (s)', 'mA');
+                [0, winRms / 1000], [-Asum, Asum], false, 'Time (s)', 'mA', false, Asum / 2.4);  // ticks every 50% of (I1 + I2)
 
             /* ── FFT display (frozen until ready) ── */
             if (fftReady) {
@@ -2608,10 +2650,11 @@ on a Python script which was made by Copilot AI.
         // Debounce: fires only after 400ms of silence, so typing "2010" doesn't
         // trigger four FFT resets. Also fires immediately on Enter.
         function debounce(fn, ms) { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; }
+        const MAX_FREQ = 3500;  // Hz — upper limit for I1/I2 frequencies
         function clampFreq(id) {
             const el = $(id);
             const v = parseFloat(el.value);
-            if (!isNaN(v) && v > 8000) el.value = 8000;
+            if (!isNaN(v) && v > MAX_FREQ) el.value = MAX_FREQ;
         }
         // f1/f2: text inputs — debounced, trigger full FFT reset + sync
         ['f1', 'f2'].forEach(id => {
@@ -2656,10 +2699,10 @@ on a Python script which was made by Copilot AI.
         });
         // Other (non-shared) params — unchanged behaviour
         ['ph1', 'ph2', 'nl', 'prf', 'pw', 'f2in'].forEach(id => {
-            const handler = debounce(() => { markParamsDirty(); updateWindowRanges(); updateFskNPulses(); }, 400);
+            const handler = debounce(() => { if (id === 'f2in') clampFreq(id); markParamsDirty(); updateWindowRanges(); updateFskNPulses(); }, 400);
             $(id).addEventListener('input', handler);
             $(id).addEventListener('keydown', e => {
-                if (e.key === 'Enter') { markParamsDirty(); updateWindowRanges(); updateFskNPulses(); }
+                if (e.key === 'Enter') { if (id === 'f2in') clampFreq(id); markParamsDirty(); updateWindowRanges(); updateFskNPulses(); }
             });
         });
 
@@ -2727,7 +2770,12 @@ on a Python script which was made by Copilot AI.
         });
         $('sl-speed').addEventListener('input', e => { $('sv-speed').textContent = e.target.value + '%'; });
         $('sl-winL').addEventListener('input', e => { $('sv-winL').textContent = parseFloat(e.target.value).toFixed(1) + ' ms'; });
-        $('sl-winR').addEventListener('input', e => { $('sv-winR').textContent = parseFloat(e.target.value).toFixed(0) + ' ms'; });
+        $('sl-winR').addEventListener('input', e => { $('sv-winR').textContent = parseFloat(e.target.value).toFixed(0) + ' ms'; syncVoltageWinSlider(); });
+        $('sl-winV').addEventListener('input', e => {
+            $('sl-winR').value = e.target.value;
+            $('sv-winR').textContent = parseFloat($('sl-winR').value).toFixed(0) + ' ms';
+            syncVoltageWinSlider();
+        });
 
         $('pp-btn').addEventListener('click', () => {
             running = !running;
@@ -3165,7 +3213,7 @@ on a Python script which was made by Copilot AI.
 
         // ── Waveform modal ──────────────────────────────────────────
         function fdPlotLineRaw(ctx, xs, ys, W, H, color, xmax, ymax, lw) {
-            const pad = { l: 38, r: 10, t: 10, b: 22 };
+            const pad = { l: 56, r: 12, t: 10, b: 24 };
             const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
             ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lw;
             for (let i = 0; i < xs.length; i++) {
@@ -3177,19 +3225,19 @@ on a Python script which was made by Copilot AI.
         }
 
         function fdPlotLine(ctx, xs, ys, W, H, color, xmax, ymax) {
-            const pad = { l: 38, r: 10, t: 10, b: 22 };
+            const pad = { l: 56, r: 12, t: 10, b: 24 };
             const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
             ctx.strokeStyle = '#1e2230'; ctx.lineWidth = 0.5;
             for (let g = 0; g <= 4; g++) {
                 const y = pad.t + g * ph / 4;
                 ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.stroke();
                 const v = (ymax - g * 2 * ymax / 4).toExponential(1);
-                ctx.fillStyle = '#c5cad9'; ctx.font = '9px "IBM Plex Mono",monospace'; ctx.textAlign = 'right';
+                ctx.fillStyle = '#c5cad9'; ctx.font = TICK_FONT; ctx.textAlign = 'right';
                 ctx.fillText(v, pad.l - 3, y + 3);
             }
-            ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#c5cad9'; ctx.font = TICK_FONT; ctx.textAlign = 'center';
             ctx.fillText('0', pad.l + pw / 2, H - 4);
-            ctx.fillText(xmax.toExponential(2) + 's', pad.l + pw, H - 4);
+            ctx.textAlign = 'right'; ctx.fillText(xmax.toExponential(2) + 's', pad.l + pw, H - 4);
             fdPlotLineRaw(ctx, xs, ys, W, H, color, xmax, ymax, 1.5);
             ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + ph);
             ctx.strokeStyle = '#2a2f3f'; ctx.lineWidth = 1; ctx.stroke();
@@ -3197,19 +3245,19 @@ on a Python script which was made by Copilot AI.
         }
 
         function fdPlotSpectrumMulti(ctx, freqs, amps, colors, W, H, xmax) {
-            const pad = { l: 38, r: 10, t: 10, b: 22 };
+            const pad = { l: 56, r: 12, t: 10, b: 24 };
             const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
             const amax = Math.max(...amps) * 1.15;
             ctx.strokeStyle = '#1e2230'; ctx.lineWidth = 0.5;
             for (let g = 0; g <= 3; g++) {
                 const y = pad.t + g * ph / 3;
                 ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.stroke();
-                ctx.fillStyle = '#c5cad9'; ctx.font = '9px "IBM Plex Mono",monospace'; ctx.textAlign = 'right';
+                ctx.fillStyle = '#c5cad9'; ctx.font = TICK_FONT; ctx.textAlign = 'right';
                 ctx.fillText((amax * (1 - g / 3)).toExponential(1), pad.l - 3, y + 3);
             }
-            ctx.fillStyle = '#606880'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#c5cad9'; ctx.font = TICK_FONT; ctx.textAlign = 'center';
             ctx.fillText('0', pad.l, H - 4);
-            ctx.fillText(Math.round(xmax) + 'Hz', pad.l + pw, H - 4);
+            ctx.textAlign = 'right'; ctx.fillText(Math.round(xmax) + 'Hz', pad.l + pw, H - 4);
             freqs.forEach((f, i) => {
                 const px = pad.l + f / xmax * pw;
                 const barH = amps[i] / amax * ph;
@@ -3217,7 +3265,7 @@ on a Python script which was made by Copilot AI.
                 ctx.beginPath(); ctx.moveTo(px, pad.t + ph); ctx.lineTo(px, pad.t + ph - barH); ctx.stroke();
                 ctx.beginPath(); ctx.arc(px, pad.t + ph - barH, 3, 0, 2 * Math.PI);
                 ctx.fillStyle = colors[i] || '#4fc3f7'; ctx.fill();
-                ctx.fillStyle = '#c8cfe0'; ctx.font = '8px "IBM Plex Mono",monospace'; ctx.textAlign = 'center';
+                ctx.fillStyle = '#c8cfe0'; ctx.font = '10px "IBM Plex Mono",monospace'; ctx.textAlign = 'center';
                 ctx.fillText(f + 'Hz', px, pad.t + ph - barH - 6);
             });
             ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + ph);
@@ -3486,7 +3534,7 @@ on a Python script which was made by Copilot AI.
             const ctx = cv.getContext('2d');
             ctx.scale(dpr, dpr);
 
-            const P = { l: 46, r: 12, t: 10, b: 28 };
+            const P = { l: 58, r: 12, t: 10, b: 34 };
             const PW = W - P.l - P.r, PH = H - P.t - P.b;
             ctx.fillStyle = '#0d0f14'; ctx.fillRect(0, 0, W, H);
             ctx.fillStyle = COL.bg; ctx.fillRect(P.l, P.t, PW, PH);
@@ -3512,7 +3560,7 @@ on a Python script which was made by Copilot AI.
             const toY = v => P.t + PH - (v - yMin) / (yMax - yMin) * PH;
 
             // Grid
-            ctx.font = '9px "IBM Plex Mono",monospace';
+            ctx.font = TICK_FONT;
             for (let i = 0; i <= 4; i++) {
                 const v = yMin + (yMax - yMin) * i / 4, y = toY(v);
                 ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
@@ -3520,21 +3568,23 @@ on a Python script which was made by Copilot AI.
                 ctx.fillStyle = COL.text; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
                 ctx.fillText(v.toFixed(2), P.l - 4, y);
             }
+            const ticks = [];
             for (let i = 0; i <= 5; i++) {
                 const v = tLo + tSpan * i / 5, x = toX(v);
                 ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
                 ctx.beginPath(); ctx.moveTo(x, P.t); ctx.lineTo(x, P.t + PH); ctx.stroke();
-                ctx.fillStyle = COL.text; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-                ctx.fillText(v.toFixed(2) + 's', x, P.t + PH + 4);
+                ticks.push({ x, lbl: v.toFixed(2) + 's' });
             }
+            ctx.fillStyle = COL.text; ctx.textBaseline = 'top';
+            drawXTicks(ctx, ticks, P.t + PH + 4);
             ctx.strokeStyle = COL.axis; ctx.lineWidth = 1;
             ctx.strokeRect(P.l, P.t, PW, PH);
 
             // Axis labels
-            ctx.fillStyle = COL.axis; ctx.font = '9px "IBM Plex Mono",monospace';
+            ctx.fillStyle = COL.axis; ctx.font = AXIS_FONT;
             ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
             ctx.fillText('Time (s)', P.l + PW / 2, H - 1);
-            ctx.save(); ctx.translate(10, P.t + PH / 2); ctx.rotate(-Math.PI / 2);
+            ctx.save(); ctx.translate(3, P.t + PH / 2); ctx.rotate(-Math.PI / 2);
             ctx.textAlign = 'center'; ctx.textBaseline = 'top';
             ctx.fillText(yLabel || 'mA', 0, 0); ctx.restore();
 
