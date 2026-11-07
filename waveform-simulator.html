@@ -395,7 +395,7 @@ on a Python script which was made by Copilot AI.
         /* Wing plot columns (I1 left, I2 right) — 1 col, 2 rows */
         .wing-plots {
             flex: 1;
-            min-width: 0;
+            min-width: 180px;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -514,6 +514,7 @@ on a Python script which was made by Copilot AI.
 
             .wing-plots {
                 width: 100%;
+                min-width: 0;
                 flex-direction: row;
                 height: 160px;
                 flex-shrink: 0
@@ -1152,7 +1153,7 @@ on a Python script which was made by Copilot AI.
                         <div id="ti-diagram">
                             <div id="ti-diagram-title">Virtual Load and Scope</div>
                             <div id="ti-diagram-svg">
-                                <svg viewBox="0 0 560 340" xmlns="http://www.w3.org/2000/svg"
+                                <svg viewBox="30 0 500 340" xmlns="http://www.w3.org/2000/svg"
                                     preserveAspectRatio="xMidYMid meet">
                                     <!-- ─── Probe Toggle — above the stimulation load ─── -->
                                     <foreignObject x="195" y="34" width="170" height="36">
@@ -3850,14 +3851,14 @@ on a Python script which was made by Copilot AI.
         ];
 
         // ─────────────────────────────────────────────────────────────────
-        // ELECTRODE POSITIONS (SVG coordinate space, viewBox 560x340)
+        // ELECTRODE POSITIONS (SVG coordinate space, 560x340; viewBox crops to x 30–530)
         //
         // These are computed from the PNG (467x406 px) mapped onto the SVG
         // image element: x=168, y=58, width=224, height=195.
         //
         // MANUAL OVERRIDE: If any electrode dot lands in the wrong spot,
         // edit its [x, y] values here. The coordinates are in SVG units
-        // matching the viewBox="0 0 560 340" of the diagram SVG.
+        // of the diagram SVG (viewBox="30 0 500 340", which trims the empty side margins).
         // ─────────────────────────────────────────────────────────────────
         const ELECTRODE_POSITIONS = {
             "FP1": [254.5, 97.8],   // also stored as Fp1
@@ -4095,6 +4096,17 @@ on a Python script which was made by Copilot AI.
             $('fd-waveModal').addEventListener('click', e => {
                 if (e.target === $('fd-waveModal')) $('fd-waveModal').classList.remove('open');
             });
+
+            // Fit the diagram panel to the drawing's 500x340 viewBox aspect so spare width
+            // goes to the I1/I2 plots instead of empty space beside the head
+            const fitDiagram = () => {
+                const panel = $('ti-diagram');
+                if (window.matchMedia('(max-width:1000px)').matches) { panel.style.flexBasis = ''; return; }
+                const h = $('ti-diagram-svg').clientHeight;
+                if (h > 0) panel.style.flexBasis = Math.round(h * 500 / 340 + 2) + 'px';
+            };
+            new ResizeObserver(fitDiagram).observe($('ti-top'));
+            fitDiagram();
 
             // Resize observer
             new ResizeObserver(() => {
